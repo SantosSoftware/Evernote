@@ -1,0 +1,580 @@
+@page "/notas"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components
+@inject IJSRuntime JS
+@inject NotaService NotaService
+@implements IAsyncDisposable
+
+<PageTitle>Notas</PageTitle>
+
+<div class="notas-layout">
+
+    <!-- Painel esquerdo: lista de notas -->
+    <div class="notas-lista-painel">
+        <div class="lista-header">
+            <span class="lista-titulo">
+                @(CadernoId.HasValue ? (NotaService.ObterCaderno(CadernoId.Value)?.Nome ?? "Notas") : "Notas")
+                <span class="lista-contagem">@_notasOrdenadas.Count</span>
+            </span>
+            <button class="btn-nova-nota" @onclick="NovaNota" title="Nova nota">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="lista-notas">
+            @foreach (var nota in _notasOrdenadas)
+            {
+                <div class="nota-card @(notaSelecionada?.Id == nota.Id ? "ativa" : "")"
+                     @onclick="() => SelecionarNota(nota)">
+                    <div class="nota-card-titulo">
+                        @(string.IsNullOrWhiteSpace(nota.Titulo) ? "Sem título" : nota.Titulo)
+                    </div>
+                    <div class="nota-card-preview">@ObterPreview(nota.Conteudo)</div>
+                    <div class="nota-card-data">@ObterTempoRelativo(nota.AtualizadoEm)</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Painel direito: editor -->
+    <div class="notas-editor-painel">
+        @if (notaSelecionada != null)
+        {
+            <div class="editor-toolbar" @ref="toolbarRef">
+
+                <!-- Botão Inserir -->
+                <div class="color-picker-wrapper">
+                    <button class="btn-inserir" @onclick="ToggleInserir" title="Inserir">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="12" />
+                            <line x1="12" y1="7" x2="12" y2="17" stroke="white" stroke-width="2" stroke-linecap="round" />
+                            <line x1="7" y1="12" x2="17" y2="12" stroke="white" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        Inserir
+                        <svg class="chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                    </button>
+
+                    @if (_mostrarInserir)
+                    {
+                        <div class="menu-inserir-dropdown">
+                            <div class="menu-inserir-grupo-titulo">Essenciais</div>
+
+                            <button class="menu-inserir-item" @onclick="InserirDivisor">
+                                <span class="menu-inserir-icone">—</span>
+                                <span class="menu-inserir-nome">Divisor</span>
+                                <span class="menu-inserir-atalho">---</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                <div class="toolbar-separador"></div>
+
+                <button @onclick='() => Formatar("bold")' title="Negrito">
+                    <b>N</b>
+                </button>
+                <button @onclick='() => Formatar("italic")' title="Itálico">
+                    <i>I</i>
+                </button>
+                <button @onclick='() => Formatar("underline")' title="Sublinhado">
+                    <u>S</u>
+                </button>
+
+                <div class="toolbar-separador"></div>
+
+                <button @onclick='() => Formatar("formatBlock", "h1")' title="Título 1">
+                    H1
+                </button>
+                <button @onclick='() => Formatar("formatBlock", "h2")' title="Título 2">
+                    H2
+                </button>
+
+                <div class="toolbar-separador"></div>
+
+                <button @onclick='() => Formatar("insertUnorderedList")' title="Lista">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="9" y1="6" x2="20" y2="6" />
+                        <line x1="9" y1="12" x2="20" y2="12" />
+                        <line x1="9" y1="18" x2="20" y2="18" />
+                        <circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none" />
+                        <circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none" />
+                        <circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none" />
+                    </svg>
+                </button>
+                <button @onclick='() => Formatar("insertOrderedList")' title="Lista numerada">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="10" y1="6" x2="21" y2="6" />
+                        <line x1="10" y1="12" x2="21" y2="12" />
+                        <line x1="10" y1="18" x2="21" y2="18" />
+                        <path d="M4 6h1v4" />
+                        <path d="M4 10h2" />
+                        <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1" />
+                    </svg>
+                </button>
+
+                <div class="toolbar-separador"></div>
+
+                <!-- Cor da fonte -->
+                <div class="color-picker-wrapper">
+                    <button class="toolbar-color-btn"
+                            title="Cor da fonte"
+                            @onclick="ToggleCorFonte">
+                        <span class="color-btn-letra">A</span>
+                        <span class="color-btn-barra" style="background: @_corFonteSelecionada"></span>
+                    </button>
+                    @if (_mostrarCorFonte)
+                    {
+                        <div class="color-palette">
+                            @foreach (var cor in _coresFonte)
+                            {
+                                <button class="color-swatch @(cor == "transparent" ? "swatch-transparente" : "")"
+                                        style="background: @cor"
+                                        title="@cor"
+                                        @onclick="() => AplicarCorFonte(cor)">
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Cor de fundo -->
+                <div class="color-picker-wrapper">
+
+                    <button class="toolbar-color-btn"
+                            title="Cor de fundo do texto"
+                            @onclick="ToggleCorFundo">
+                        <span class="color-btn-letra" style="background: @_corFundoSelecionada; padding: 0 2px;">A</span>
+                        <span class="color-btn-barra" style="background: @_corFundoSelecionada"></span>
+                    </button>
+                    @if (_mostrarCorFundo)
+                    {
+                        <div class="color-palette">
+                            @foreach (var cor in _coresFundo)
+                            {
+                                <button class="color-swatch @(cor == "transparent" ? "swatch-transparente" : "")"
+                                        style="background: @cor"
+                                        title="@(cor == "transparent" ? "Sem cor" : cor)"
+                                        @onclick="() => AplicarCorFundo(cor)">
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Menu de ações da nota -->
+                <div class="color-picker-wrapper menu-acoes-wrapper">
+                    <button class="toolbar-color-btn btn-menu-acoes"
+                            title="Mais opções"
+                            @onclick="ToggleMenuAcoes">
+                        <span class="menu-acoes-pontos">•••</span>
+                    </button>
+                    @if (_mostrarMenuAcoes)
+                    {
+                        <div class="menu-acoes-dropdown">
+                            <button class="menu-acoes-item" @onclick="AbrirModalMover">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12H19" />
+                                    <path d="M13 6l6 6-6 6" />
+                                </svg>
+                                Mover
+                            </button>
+                            <button class="menu-acoes-item menu-acoes-item-perigo"
+                                    @onclick="MoverParaLixeira">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6" />
+                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                    <path d="M10 11v6M14 11v6" />
+                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                </svg>
+                                Lixeira
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <input class="editor-titulo"
+                   value="@notaSelecionada.Titulo"
+                   @oninput="e => notaSelecionada.Titulo = e.Value?.ToString() ?? string.Empty"
+                   placeholder="Título" />
+
+            <div class="editor-conteudo"
+                 contenteditable="true"
+                 @ref="editorRef"
+                 @onfocusout="OnEditorFocusOut">
+            </div>
+        }
+        else
+        {
+            <div class="editor-vazio">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <line x1="7" y1="8" x2="17" y2="8" />
+                    <line x1="7" y1="12" x2="17" y2="12" />
+                    <line x1="7" y1="16" x2="13" y2="16" />
+                </svg>
+                <p>Selecione uma nota ou crie uma nova</p>
+                <button class="btn-criar-primeira" @onclick="NovaNota">Nova nota</button>
+            </div>
+        }
+    </div>
+
+</div>
+
+<!-- Modal: Mover nota para caderno -->
+@if (_mostrarModalMover && notaSelecionada != null)
+{
+    <div class="modal-overlay" @onclick="FecharModalMover">
+        <div class="modal-mover" @onclick:stopPropagation="true">
+
+            <!-- Cabeçalho -->
+            <div class="modal-header">
+                <span class="modal-titulo">Mover</span>
+                <div class="modal-nota-chip">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <line x1="7" y1="8" x2="17" y2="8" />
+                        <line x1="7" y1="12" x2="17" y2="12" />
+                        <line x1="7" y1="16" x2="13" y2="16" />
+                    </svg>
+                    <span>@(string.IsNullOrWhiteSpace(notaSelecionada.Titulo) ? "Sem título" : notaSelecionada.Titulo)</span>
+                </div>
+                <button class="modal-fechar" @onclick="FecharModalMover">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Busca -->
+            <div class="modal-busca-wrapper">
+                <input class="modal-busca-input" type="text"
+                       placeholder="Encontrar uma localização..."
+                       @bind="_termoBuscaMover" @bind:event="oninput" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     class="modal-busca-icone">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+            </div>
+
+            <!-- Lista de cadernos -->
+            <div class="modal-lista">
+                @foreach (var caderno in CadernosFiltradosMover)
+                {
+                    <button class="modal-caderno-item @(_cadernoDestino?.Id == caderno.Id ? "selecionado" : "")"
+                            @onclick="() => _cadernoDestino = caderno">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                        </svg>
+                        <span>@caderno.Nome</span>
+                        @if (caderno.Id == notaSelecionada.CadernoId)
+                        {
+                            <span class="caderno-atual-badge">atual</span>
+                        }
+                    </button>
+                }
+                @if (!CadernosFiltradosMover.Any())
+                {
+                    <p class="modal-vazio">Nenhum caderno encontrado.</p>
+                }
+            </div>
+
+            <!-- Rodapé -->
+            <div class="modal-footer">
+                <button class="modal-btn-cancelar" @onclick="FecharModalMover">Cancelar</button>
+                <button class="modal-btn-pronto"
+                        disabled="@(_cadernoDestino == null || _cadernoDestino.Id == notaSelecionada.CadernoId)"
+                        @onclick="ConfirmarMover">
+                    Pronto
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    // ── Parâmetros ───────────────────────────────────────────────────────────────
+
+    [Parameter, SupplyParameterFromQuery(Name = "caderno")]
+    public Guid? CadernoId { get; set; }
+
+    // ── Estado ──────────────────────────────────────────────────────────────────
+
+    private Nota? notaSelecionada;
+    private List<Nota> _notasOrdenadas = new();
+    private ElementReference editorRef;
+    private ElementReference toolbarRef;
+    private Guid? _idCarregado;
+    private bool _inicializado = false;
+    private bool _inicializadoParametros = false;
+    private Guid? _cadernoIdAnterior;
+    private bool _mostrarInserir = false;
+    private bool _mostrarMenuAcoes = false;
+    private bool _mostrarModalMover = false;
+    private string _termoBuscaMover = "";
+    private Caderno? _cadernoDestino = null;
+
+    // ── Color picker ─────────────────────────────────────────────────────────────
+
+    private bool _mostrarCorFonte = false;
+    private bool _mostrarCorFundo = false;
+    private string _corFonteSelecionada = "#1a1a1a";
+    private string _corFundoSelecionada = "#ffff00";
+
+    private static readonly string[] _coresFonte = new[]
+    {
+        "#1a1a1a", "#666666", "#999999", "#cccccc",
+        "#e53e3e", "#dd6b20", "#d69e2e", "#38a169",
+        "#3182ce", "#805ad5", "#d53f8c", "#319795",
+        "#c53030", "#2b6cb0", "#744210", "#ffffff"
+    };
+
+    private static readonly string[] _coresFundo = new[]
+    {
+        "transparent",
+        "#fed7d7", "#feebc8", "#fefcbf", "#c6f6d5",
+        "#bee3f8", "#e9d8fd", "#fed7e9", "#b2f5ea",
+        "#feb2b2", "#fbd38d", "#faf089", "#9ae6b4",
+        "#90cdf4", "#d6bcfa", "#fbb6ce", "#81e6d9"
+    };
+
+    // ── Lifecycle ────────────────────────────────────────────────────────────────
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!_inicializadoParametros || _cadernoIdAnterior != CadernoId)
+        {
+            if (_inicializadoParametros)
+                await SalvarConteudoAtual();
+
+            _inicializadoParametros = true;
+            _cadernoIdAnterior = CadernoId;
+            _inicializado = false;
+
+            _notasOrdenadas = (CadernoId.HasValue
+                ? NotaService.NotasAtivas.Where(n => n.CadernoId == CadernoId.Value)
+                : NotaService.NotasAtivas)
+                .OrderByDescending(n => n.AtualizadoEm)
+                .ToList();
+
+            if (notaSelecionada == null || !_notasOrdenadas.Contains(notaSelecionada))
+            {
+                notaSelecionada = _notasOrdenadas.FirstOrDefault();
+                _idCarregado = null;
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (notaSelecionada != null)
+        {
+            // Inicializa editor e toolbar uma única vez no JS (listeners de mouseup/keyup/mousedown)
+            if (!_inicializado)
+            {
+                _inicializado = true;
+                await JS.InvokeVoidAsync("evenoteEditor.init", editorRef, toolbarRef);
+            }
+
+            // Carrega o conteúdo HTML no editor sempre que trocar de nota
+            if (_idCarregado != notaSelecionada.Id)
+            {
+                _idCarregado = notaSelecionada.Id;
+                await JS.InvokeVoidAsync("evenoteEditor.setContent", editorRef, notaSelecionada.Conteudo);
+            }
+        }
+    }
+
+    // ── Ações ────────────────────────────────────────────────────────────────────
+
+    private async Task SelecionarNota(Nota nota)
+    {
+        if (notaSelecionada == nota) return;
+        await SalvarConteudoAtual();
+        notaSelecionada = nota;
+        _idCarregado = null;
+    }
+
+    private async Task NovaNota()
+    {
+        await SalvarConteudoAtual();
+        var nova = new Nota { Titulo = "", Conteudo = "", AtualizadoEm = DateTime.Now, CadernoId = CadernoId ?? NotaService.IdCadernoPrincipal };
+        NotaService.Adicionar(nova);
+        _notasOrdenadas.Insert(0, nova);
+        notaSelecionada = nova;
+        _idCarregado = null;
+    }
+
+    private async Task MoverParaLixeira()
+    {
+        if (notaSelecionada == null) return;
+        _mostrarMenuAcoes = false;
+
+        await SalvarConteudoAtual();
+
+        var nota = notaSelecionada;
+        var index = _notasOrdenadas.IndexOf(nota);
+
+        NotaService.MoverParaLixeira(nota);
+        _notasOrdenadas.Remove(nota);
+
+        // Seleciona a próxima nota disponível
+        notaSelecionada = _notasOrdenadas.Count > 0
+            ? _notasOrdenadas[Math.Min(index, _notasOrdenadas.Count - 1)]
+            : null;
+        _idCarregado = null;
+    }
+
+    private IEnumerable<Caderno> CadernosFiltradosMover =>
+        string.IsNullOrWhiteSpace(_termoBuscaMover)
+            ? NotaService.Cadernos
+            : NotaService.Cadernos.Where(c =>
+                c.Nome.Contains(_termoBuscaMover, StringComparison.OrdinalIgnoreCase));
+
+    private void AbrirModalMover()
+    {
+        _mostrarMenuAcoes = false;
+        _termoBuscaMover = "";
+        _cadernoDestino = null;
+        _mostrarModalMover = true;
+    }
+
+    private void FecharModalMover()
+    {
+        _mostrarModalMover = false;
+        _cadernoDestino = null;
+    }
+
+    private void ConfirmarMover()
+    {
+        if (notaSelecionada == null || _cadernoDestino == null) return;
+        notaSelecionada.CadernoId = _cadernoDestino.Id;
+        _mostrarModalMover = false;
+        _cadernoDestino = null;
+    }
+
+    private void ToggleInserir()
+    {
+        _mostrarInserir = !_mostrarInserir;
+        _mostrarCorFonte = false;
+        _mostrarCorFundo = false;
+        _mostrarMenuAcoes = false;
+    }
+
+    private async Task InserirDivisor()
+    {
+        _mostrarInserir = false;
+        // <hr> + <p> vazio para o cursor continuar abaixo da linha
+        await JS.InvokeVoidAsync("evenoteEditor.insertHtml", "<hr/><p><br/></p>");
+    }
+
+    private void ToggleMenuAcoes()
+    {
+        _mostrarMenuAcoes = !_mostrarMenuAcoes;
+        _mostrarCorFonte = false;
+        _mostrarCorFundo = false;
+        _mostrarInserir = false;
+    }
+
+    private async Task Formatar(string comando, string? valor = null)
+    {
+        // Chama document.execCommand no browser via JS interop
+        await JS.InvokeVoidAsync("evenoteEditor.format", comando, valor);
+    }
+
+    private void ToggleCorFonte()
+    {
+        _mostrarCorFonte = !_mostrarCorFonte;
+        _mostrarCorFundo = false;
+        _mostrarInserir = false;
+        _mostrarMenuAcoes = false;
+    }
+
+    private void ToggleCorFundo()
+    {
+        _mostrarCorFundo = !_mostrarCorFundo;
+        _mostrarCorFonte = false;
+        _mostrarInserir = false;
+        _mostrarMenuAcoes = false;
+    }
+
+    private async Task AplicarCorFonte(string cor)
+    {
+        _corFonteSelecionada = cor == "transparent" ? "#1a1a1a" : cor;
+        _mostrarCorFonte = false;
+        await JS.InvokeVoidAsync("evenoteEditor.applyColor", "foreColor", cor);
+    }
+
+    private async Task AplicarCorFundo(string cor)
+    {
+        _corFundoSelecionada = cor == "transparent" ? "#ffff00" : cor;
+        _mostrarCorFundo = false;
+        await JS.InvokeVoidAsync("evenoteEditor.applyColor", "hiliteColor", cor);
+    }
+
+    private async Task OnEditorFocusOut(FocusEventArgs _)
+    {
+        await SalvarConteudoAtual();
+    }
+
+    private async Task SalvarConteudoAtual()
+    {
+        if (notaSelecionada == null) return;
+        try
+        {
+            var conteudo = await JS.InvokeAsync<string>("evenoteEditor.getContent", editorRef);
+            notaSelecionada.Conteudo = conteudo;
+            // Não atualiza AtualizadoEm aqui para não reordenar a lista durante edição
+        }
+        catch { /* editor pode não estar montado ainda */ }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────────
+
+    private static string ObterPreview(string html)
+    {
+        var texto = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
+        texto = System.Net.WebUtility.HtmlDecode(texto).Trim();
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\s+", " ");
+        return texto.Length > 75 ? texto[..75] + "…" : texto;
+    }
+
+    private static string ObterTempoRelativo(DateTime data)
+    {
+        var diff = DateTime.Now - data;
+        if (diff.TotalMinutes < 1) return "agora";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} min atrás";
+        if (diff.TotalHours < 24)
+        {
+            var h = (int)diff.TotalHours;
+            return $"{h} hora{(h > 1 ? "s" : "")} atrás";
+        }
+        return data.ToString("dd/MM/yyyy");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await SalvarConteudoAtual();
+    }
+
+}

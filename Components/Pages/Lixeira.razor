@@ -1,0 +1,121 @@
+@page "/lixeira"
+@rendermode InteractiveServer
+@inject NotaService NotaService
+
+<PageTitle>Lixeira</PageTitle>
+
+<div class="lixeira-layout">
+
+    <div class="lixeira-header">
+        <div class="lixeira-titulo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                <path d="M10 11v6M14 11v6" />
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+            </svg>
+            <h1>Lixeira</h1>
+            <span class="lixeira-contagem">@notas.Count</span>
+        </div>
+
+        @if (notas.Count > 0)
+        {
+            <button class="btn-esvaziar" @onclick="EsvaziarLixeira">
+                Esvaziar lixeira
+            </button>
+        }
+    </div>
+
+    @if (notas.Count == 0)
+    {
+        <div class="lixeira-vazia">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                <path d="M10 11v6M14 11v6" />
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+            </svg>
+            <p>A lixeira está vazia</p>
+        </div>
+    }
+    else
+    {
+        <div class="lixeira-lista">
+            @foreach (var nota in notas)
+            {
+                <div class="lixeira-card">
+                    <div class="lixeira-card-info">
+                        <div class="lixeira-card-titulo">
+                            @(string.IsNullOrWhiteSpace(nota.Titulo) ? "Sem título" : nota.Titulo)
+                        </div>
+                        <div class="lixeira-card-preview">@ObterPreview(nota.Conteudo)</div>
+                        <div class="lixeira-card-data">Excluída em @nota.AtualizadoEm.ToString("dd/MM/yyyy")</div>
+                    </div>
+                    <div class="lixeira-card-acoes">
+                        <button class="btn-restaurar" @onclick="() => Restaurar(nota)" title="Restaurar nota">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                <path d="M3 3v5h5" />
+                            </svg>
+                            Restaurar
+                        </button>
+                        <button class="btn-excluir-definitivo" @onclick="() => ExcluirDefinitivamente(nota)" title="Excluir permanentemente">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                            Excluir
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    private List<Nota> notas = new();
+
+    protected override void OnInitialized()
+    {
+        CarregarNotas();
+    }
+
+    private void CarregarNotas()
+    {
+        notas = NotaService.NotasExcluidas
+            .OrderByDescending(n => n.AtualizadoEm)
+            .ToList();
+    }
+
+    private void Restaurar(Nota nota)
+    {
+        NotaService.Restaurar(nota);
+        notas.Remove(nota);
+    }
+
+    private void ExcluirDefinitivamente(Nota nota)
+    {
+        NotaService.ExcluirDefinitivamente(nota);
+        notas.Remove(nota);
+    }
+
+    private void EsvaziarLixeira()
+    {
+        NotaService.EsvaziarLixeira();
+        notas.Clear();
+    }
+
+    private static string ObterPreview(string html)
+    {
+        var texto = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ");
+        texto = System.Net.WebUtility.HtmlDecode(texto).Trim();
+        texto = System.Text.RegularExpressions.Regex.Replace(texto, @"\s+", " ");
+        return texto.Length > 100 ? texto[..100] + "…" : texto;
+    }
+}

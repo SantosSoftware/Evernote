@@ -1,0 +1,387 @@
+/* ── Container ────────────────────────────────────────────────────────────── */
+
+.cadernos-container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+/* ── Cabeçalho ────────────────────────────────────────────────────────────── */
+
+.cadernos-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.cadernos-header-esquerda {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.cadernos-titulo {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.cadernos-contagem {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #888;
+    background: #e8e8e8;
+    border-radius: 10px;
+    padding: 2px 8px;
+}
+
+.cadernos-header-direita {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* ── Busca ────────────────────────────────────────────────────────────────── */
+
+.busca-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.busca-icone {
+    position: absolute;
+    left: 0.6rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    color: #aaa;
+    pointer-events: none;
+}
+
+.busca-input {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem 0.4rem 2rem;
+    font-size: 0.875rem;
+    background: #fafafa;
+    color: #1a1a1a;
+    outline: none;
+    width: 220px;
+    transition: border-color 0.15s;
+}
+
+.busca-input:focus {
+    border-color: #aaa;
+    background: #fff;
+}
+
+.busca-input::placeholder {
+    color: #bbb;
+}
+
+/* ── Botão Novo Caderno ───────────────────────────────────────────────────── */
+
+.btn-novo-caderno {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.45rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+.btn-novo-caderno:hover {
+    background: #333;
+}
+
+.btn-novo-caderno svg {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+/* ── Linha de criação inline ──────────────────────────────────────────────── */
+
+.caderno-novo-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1rem;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    background: #fafafa;
+    margin-bottom: 1rem;
+}
+
+.caderno-novo-inline .caderno-icone {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: #888;
+    flex-shrink: 0;
+}
+
+.input-nome-caderno {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 0.9rem;
+    background: transparent;
+    color: #1a1a1a;
+}
+
+.input-nome-caderno::placeholder {
+    color: #bbb;
+}
+
+/* ── Botões confirmar / cancelar ──────────────────────────────────────────── */
+
+.btn-confirmar {
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-confirmar:hover {
+    background: #333;
+}
+
+.btn-cancelar {
+    background: none;
+    color: #555;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-cancelar:hover {
+    background: #f0f0f0;
+}
+
+/* ── Tabela ───────────────────────────────────────────────────────────────── */
+
+.cadernos-tabela-wrapper {
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.cadernos-tabela {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.cadernos-tabela thead tr {
+    background: #f5f5f5;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.cadernos-tabela th {
+    text-align: left;
+    padding: 0.6rem 1rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.cadernos-tabela tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.1s;
+}
+
+.cadernos-tabela tbody tr:last-child {
+    border-bottom: none;
+}
+
+.cadernos-tabela tbody tr:hover,
+.cadernos-tabela tbody tr.linha-destaque {
+    background: #fafafa;
+}
+
+.cadernos-tabela td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+    color: #2a2a2a;
+}
+
+/* Larguras das colunas */
+.col-titulo  { width: auto; }
+.col-criador { width: 160px; color: #666; }
+.col-data    { width: 130px; color: #888; font-size: 0.85rem; }
+.col-acoes   { width: 56px; }
+
+/* ── Célula de nome do caderno ────────────────────────────────────────────── */
+
+.caderno-nome-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.caderno-icone {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: #888;
+    flex-shrink: 0;
+}
+
+.caderno-nome {
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+.caderno-badge {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: #888;
+    background: #ebebeb;
+    border-radius: 10px;
+    padding: 1px 6px;
+    margin-left: 2px;
+}
+
+/* ── Renomear inline ──────────────────────────────────────────────────────── */
+
+.rename-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.input-renomear {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    outline: none;
+    flex: 1;
+    max-width: 280px;
+    color: #1a1a1a;
+}
+
+.input-renomear:focus {
+    border-color: #888;
+}
+
+.btn-sm {
+    padding: 0.2rem 0.6rem !important;
+    font-size: 0.78rem !important;
+}
+
+/* ── Menu de ações ────────────────────────────────────────────────────────── */
+
+.acoes-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-acoes {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #aaa;
+    padding: 4px 6px;
+    border-radius: 5px;
+    line-height: 1;
+    transition: background 0.12s, color 0.12s;
+}
+
+.btn-acoes:hover {
+    background: #ebebeb;
+    color: #444;
+}
+
+.pontos {
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+
+.acoes-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    padding: 4px;
+    min-width: 150px;
+    z-index: 100;
+}
+
+.acao-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    text-align: left;
+    color: #2a2a2a;
+    transition: background 0.12s;
+}
+
+.acao-item svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
+}
+
+.acao-item:hover {
+    background: #f5f5f5;
+}
+
+.acao-perigo {
+    color: #e53e3e;
+}
+
+.acao-perigo:hover {
+    background: #fff0f0;
+}
+
+/* ── Estado vazio ─────────────────────────────────────────────────────────── */
+
+.cadernos-vazio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: #ccc;
+    gap: 0.75rem;
+}
+
+.cadernos-vazio svg {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+.cadernos-vazio p {
+    font-size: 0.9rem;
+    margin: 0;
+}

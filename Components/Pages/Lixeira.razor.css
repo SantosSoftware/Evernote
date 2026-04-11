@@ -1,0 +1,175 @@
+.lixeira-layout {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.lixeira-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.lixeira-titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.lixeira-titulo svg {
+    width: 1.4rem;
+    height: 1.4rem;
+    color: #888;
+}
+
+.lixeira-titulo h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.lixeira-contagem {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #888;
+    background: #e8e8e8;
+    border-radius: 10px;
+    padding: 1px 7px;
+}
+
+.btn-esvaziar {
+    background: none;
+    border: 1px solid #e53e3e;
+    color: #e53e3e;
+    border-radius: 6px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btn-esvaziar:hover {
+    background: #e53e3e;
+    color: #fff;
+}
+
+/* ── Estado vazio ──────────────────────────────────────────────────────── */
+
+.lixeira-vazia {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 4rem 0;
+    color: #bbb;
+}
+
+.lixeira-vazia svg {
+    width: 3rem;
+    height: 3rem;
+}
+
+.lixeira-vazia p {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* ── Lista de notas ────────────────────────────────────────────────────── */
+
+.lixeira-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lixeira-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    transition: box-shadow 0.15s;
+}
+
+.lixeira-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.lixeira-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.lixeira-card-titulo {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+}
+
+.lixeira-card-preview {
+    font-size: 0.8rem;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lixeira-card-data {
+    font-size: 0.72rem;
+    color: #bbb;
+    margin-top: 4px;
+}
+
+.lixeira-card-acoes {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.btn-restaurar,
+.btn-excluir-definitivo {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: none;
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-restaurar svg,
+.btn-excluir-definitivo svg {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+.btn-restaurar {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.btn-restaurar:hover {
+    background: #e0e0e0;
+}
+
+.btn-excluir-definitivo {
+    background: #fff0f0;
+    color: #e53e3e;
+}
+
+.btn-excluir-definitivo:hover {
+    background: #e53e3e;
+    color: #fff;
+}

@@ -1,0 +1,243 @@
+@page "/cadernos"
+@rendermode InteractiveServer
+@inject NotaService NotaService
+
+<PageTitle>Cadernos</PageTitle>
+
+<div class="cadernos-container">
+
+    <!-- Cabeçalho -->
+    <div class="cadernos-header">
+        <div class="cadernos-header-esquerda">
+            <h1 class="cadernos-titulo">Cadernos</h1>
+            <span class="cadernos-contagem">@NotaService.Cadernos.Count</span>
+        </div>
+        <div class="cadernos-header-direita">
+            <div class="busca-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     class="busca-icone">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input class="busca-input" type="text" placeholder="Encontrar cadernos..."
+                       @bind="_termoBusca" @bind:event="oninput" />
+            </div>
+            <button class="btn-novo-caderno" @onclick="IniciarNovoCaderno">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Novo Caderno
+            </button>
+        </div>
+    </div>
+
+    <!-- Linha de criação inline -->
+    @if (_criandoNovo)
+    {
+        <div class="caderno-novo-inline">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 class="caderno-icone">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            </svg>
+            <input class="input-nome-caderno" type="text" placeholder="Nome do caderno"
+                   @bind="_nomeNovoCaderno" @bind:event="oninput"
+                   @onkeydown="TeclaNovoInput"
+                   @ref="_inputNovoRef" />
+            <button class="btn-confirmar" @onclick="ConfirmarNovoCaderno">Criar</button>
+            <button class="btn-cancelar" @onclick="CancelarNovoCaderno">Cancelar</button>
+        </div>
+    }
+
+    <!-- Tabela de cadernos -->
+    <div class="cadernos-tabela-wrapper">
+        <table class="cadernos-tabela">
+            <thead>
+                <tr>
+                    <th class="col-titulo">Título</th>
+                    <th class="col-criador">Criado por</th>
+                    <th class="col-data">Atualizado</th>
+                    <th class="col-acoes"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var caderno in CadernosFiltrados)
+                {
+                    <tr class="caderno-linha @(_menuAbertoId == caderno.Id ? "linha-destaque" : "")">
+                        <td class="col-titulo">
+                            @if (_renomeandoId == caderno.Id)
+                            {
+                                <div class="rename-wrapper">
+                                    <input class="input-renomear" type="text"
+                                           @bind="_nomeRenomear" @bind:event="oninput"
+                                           @onkeydown="TeclaRenomearInput"
+                                           @ref="_inputRenomearRef" />
+                                    <button class="btn-confirmar btn-sm" @onclick="() => ConfirmarRenomear(caderno)">Salvar</button>
+                                    <button class="btn-cancelar btn-sm" @onclick="CancelarRenomear">Cancelar</button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="caderno-nome-cell">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                         class="caderno-icone">
+                                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                                    </svg>
+                                    <span class="caderno-nome">@caderno.Nome</span>
+                                    <span class="caderno-badge">@NotaService.ContarNotasNoCaderno(caderno.Id)</span>
+                                </div>
+                            }
+                        </td>
+                        <td class="col-criador">@caderno.CriadoPor</td>
+                        <td class="col-data">@caderno.AtualizadoEm.ToString("dd/MM/yyyy")</td>
+                        <td class="col-acoes">
+                            <div class="acoes-wrapper">
+                                <button class="btn-acoes" @onclick="() => ToggleMenu(caderno.Id)" title="Ações">
+                                    <span class="pontos">•••</span>
+                                </button>
+                                @if (_menuAbertoId == caderno.Id)
+                                {
+                                    <div class="acoes-dropdown">
+                                        <button class="acao-item" @onclick="() => IniciarRenomear(caderno)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                            </svg>
+                                            Renomear
+                                        </button>
+                                        @if (caderno.Id != NotaService.IdCadernoPrincipal)
+                                        {
+                                            <button class="acao-item acao-perigo" @onclick="() => ExcluirCaderno(caderno)">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="3 6 5 6 21 6" />
+                                                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                                    <path d="M10 11v6" />
+                                                    <path d="M14 11v6" />
+                                                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                                </svg>
+                                                Excluir
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (!CadernosFiltrados.Any())
+        {
+            <div class="cadernos-vazio">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                </svg>
+                <p>Nenhum caderno encontrado.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string _termoBusca = "";
+    private bool _criandoNovo = false;
+    private string _nomeNovoCaderno = "";
+    private ElementReference _inputNovoRef;
+
+    private Guid? _menuAbertoId = null;
+    private Guid? _renomeandoId = null;
+    private string _nomeRenomear = "";
+    private ElementReference _inputRenomearRef;
+
+    private IEnumerable<Caderno> CadernosFiltrados =>
+        string.IsNullOrWhiteSpace(_termoBusca)
+            ? NotaService.Cadernos
+            : NotaService.Cadernos.Where(c =>
+                c.Nome.Contains(_termoBusca, StringComparison.OrdinalIgnoreCase));
+
+    private async Task IniciarNovoCaderno()
+    {
+        _menuAbertoId = null;
+        _renomeandoId = null;
+        _criandoNovo = true;
+        _nomeNovoCaderno = "";
+        await Task.Yield();
+        try { await _inputNovoRef.FocusAsync(); } catch { }
+    }
+
+    private void ConfirmarNovoCaderno()
+    {
+        var nome = _nomeNovoCaderno.Trim();
+        if (!string.IsNullOrEmpty(nome))
+            NotaService.AdicionarCaderno(nome);
+        _criandoNovo = false;
+        _nomeNovoCaderno = "";
+    }
+
+    private void CancelarNovoCaderno()
+    {
+        _criandoNovo = false;
+        _nomeNovoCaderno = "";
+    }
+
+    private async Task TeclaNovoInput(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") ConfirmarNovoCaderno();
+        else if (e.Key == "Escape") CancelarNovoCaderno();
+        await Task.CompletedTask;
+    }
+
+    private void ToggleMenu(Guid id)
+    {
+        _menuAbertoId = _menuAbertoId == id ? null : id;
+        _renomeandoId = null;
+    }
+
+    private async Task IniciarRenomear(Caderno caderno)
+    {
+        _menuAbertoId = null;
+        _renomeandoId = caderno.Id;
+        _nomeRenomear = caderno.Nome;
+        await Task.Yield();
+        try { await _inputRenomearRef.FocusAsync(); } catch { }
+    }
+
+    private void ConfirmarRenomear(Caderno caderno)
+    {
+        var nome = _nomeRenomear.Trim();
+        if (!string.IsNullOrEmpty(nome))
+            NotaService.RenomearCaderno(caderno, nome);
+        _renomeandoId = null;
+    }
+
+    private void CancelarRenomear()
+    {
+        _renomeandoId = null;
+    }
+
+    private async Task TeclaRenomearInput(KeyboardEventArgs e)
+    {
+        var caderno = NotaService.Cadernos.FirstOrDefault(c => c.Id == _renomeandoId);
+        if (caderno == null) return;
+        if (e.Key == "Enter") ConfirmarRenomear(caderno);
+        else if (e.Key == "Escape") CancelarRenomear();
+        await Task.CompletedTask;
+    }
+
+    private void ExcluirCaderno(Caderno caderno)
+    {
+        _menuAbertoId = null;
+        NotaService.ExcluirCaderno(caderno);
+    }
+}

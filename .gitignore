@@ -1,0 +1,17 @@
+## Claude Code
+.claude/
+
+## .NET / Blazor
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.pdb
+
+## Logs
+*.log
+
+## OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,788 @@
+/* ── Layout geral: dois painéis lado a lado ────────────────────────────── */
+
+.notas-layout {
+    display: flex;
+    height: 100vh;
+    /* cancela o padding do article/content para ocupar toda a altura */
+    margin: -1.1rem -1.5rem 0;
+    overflow: hidden;
+}
+
+@media (min-width: 641px) {
+    .notas-layout {
+        margin: -1.1rem -1.5rem 0 -2rem;
+    }
+}
+
+/* ── Painel esquerdo: lista de notas ────────────────────────────────────── */
+
+.notas-lista-painel {
+    width: 280px;
+    min-width: 220px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #e0e0e0;
+    background-color: #f9f9f9;
+    overflow: hidden;
+}
+
+.lista-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1rem 0.75rem;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.lista-titulo {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.lista-contagem {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #888;
+    background: #e8e8e8;
+    border-radius: 10px;
+    padding: 1px 7px;
+}
+
+.btn-nova-nota {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #555;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: background 0.15s;
+}
+
+.btn-nova-nota:hover {
+    background: #e8e8e8;
+    color: #1a1a1a;
+}
+
+.btn-nova-nota svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.lista-notas {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+}
+
+/* ── Cartão de nota na lista ─────────────────────────────────────────────── */
+
+.nota-card {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background 0.12s;
+}
+
+.nota-card:hover {
+    background-color: #f0f0f0;
+}
+
+.nota-card.ativa {
+    background-color: #ebebeb;
+    border-left-color: #1a1a1a;
+}
+
+.nota-card-titulo {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+}
+
+.nota-card-preview {
+    font-size: 0.78rem;
+    color: #777;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.nota-card-data {
+    font-size: 0.72rem;
+    color: #aaa;
+}
+
+/* ── Painel direito: editor ──────────────────────────────────────────────── */
+
+.notas-editor-painel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    overflow: hidden;
+}
+
+/* ── Barra de ferramentas ────────────────────────────────────────────────── */
+
+.editor-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0.5rem 1.5rem;
+    border-bottom: 1px solid #e8e8e8;
+    background: #fafafa;
+    flex-shrink: 0;
+}
+
+.editor-toolbar button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #444;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+    min-width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s;
+}
+
+.editor-toolbar button:hover {
+    background: #e8e8e8;
+    color: #1a1a1a;
+}
+
+.editor-toolbar button svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.toolbar-separador {
+    width: 1px;
+    height: 1.25rem;
+    background: #ddd;
+    margin: 0 4px;
+}
+
+/* ── Botão Inserir ───────────────────────────────────────────────────────── */
+
+.btn-inserir {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #1a1a1a;
+    height: 2rem;
+    transition: background 0.12s;
+}
+
+.btn-inserir:hover {
+    background: #e8e8e8;
+}
+
+.btn-inserir > svg:first-child {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: #2563eb;
+    flex-shrink: 0;
+}
+
+.btn-inserir .chevron {
+    width: 0.75rem;
+    height: 0.75rem;
+    color: #888;
+}
+
+/* Dropdown do Inserir */
+.menu-inserir-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+    padding: 8px;
+    min-width: 280px;
+    z-index: 100;
+}
+
+.menu-inserir-grupo-titulo {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 8px 6px;
+}
+
+.menu-inserir-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+}
+
+.menu-inserir-item:hover {
+    background: #f5f5f5;
+}
+
+.menu-inserir-icone {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #444;
+    width: 1.5rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.menu-inserir-texto {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.menu-inserir-nome {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+.menu-inserir-desc {
+    font-size: 0.75rem;
+    color: #999;
+}
+
+.menu-inserir-atalho {
+    font-size: 0.75rem;
+    color: #bbb;
+    font-family: monospace;
+    flex-shrink: 0;
+}
+
+/* ── Color picker ────────────────────────────────────────────────────────── */
+
+.color-picker-wrapper {
+    position: relative;
+}
+
+.toolbar-color-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    height: 2rem;
+    justify-content: center;
+    transition: background 0.12s;
+}
+
+.toolbar-color-btn:hover {
+    background: #e8e8e8;
+}
+
+.color-btn-letra {
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #1a1a1a;
+    border-radius: 2px;
+}
+
+.color-btn-barra {
+    display: block;
+    width: 1.1rem;
+    height: 3px;
+    border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.12);
+}
+
+/* Paleta flutuante */
+.color-palette {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(4, 1.4rem);
+    gap: 4px;
+    z-index: 100;
+}
+
+.color-swatch {
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 4px;
+    border: 1.5px solid rgba(0,0,0,0.1);
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.1s, border-color 0.1s;
+}
+
+.color-swatch:hover {
+    transform: scale(1.2);
+    border-color: rgba(0,0,0,0.4);
+}
+
+/* Swatch "sem cor" — xadrez para indicar transparente */
+.swatch-transparente {
+    background-image:
+        linear-gradient(45deg, #ccc 25%, transparent 25%),
+        linear-gradient(-45deg, #ccc 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #ccc 75%),
+        linear-gradient(-45deg, transparent 75%, #ccc 75%) !important;
+    background-size: 8px 8px;
+    background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+    background-color: #fff !important;
+    position: relative;
+}
+
+.swatch-transparente::after {
+    content: '×';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: #e53e3e;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* ── Campo de título ─────────────────────────────────────────────────────── */
+
+.editor-titulo {
+    border: none;
+    outline: none;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    padding: 1.25rem 2rem 0.5rem;
+    width: 100%;
+    background: transparent;
+    font-family: inherit;
+}
+
+.editor-titulo::placeholder {
+    color: #ccc;
+}
+
+/* ── Área de conteúdo editável ───────────────────────────────────────────── */
+
+.editor-conteudo {
+    flex: 1;
+    padding: 0.5rem 2rem 2rem;
+    outline: none;
+    overflow-y: auto;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #2a2a2a;
+    caret-color: #1a1a1a;
+}
+
+.editor-conteudo:empty::before {
+    content: 'Comece a escrever…';
+    color: #ccc;
+    pointer-events: none;
+}
+
+/* Estilos do conteúdo HTML gerado pelo editor */
+.editor-conteudo h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 1rem 0 0.5rem;
+    color: #111;
+}
+
+.editor-conteudo h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0.9rem 0 0.4rem;
+    color: #222;
+}
+
+.editor-conteudo p {
+    margin: 0.4rem 0;
+}
+
+.editor-conteudo ul,
+.editor-conteudo ol {
+    padding-left: 1.5rem;
+    margin: 0.4rem 0;
+}
+
+.editor-conteudo li {
+    margin: 0.2rem 0;
+}
+
+.editor-conteudo hr {
+    border: none;
+    border-top: 2px solid #e0e0e0;
+    margin: 1.25rem 0;
+    border-radius: 1px;
+}
+
+/* ── Menu de ações (...) ─────────────────────────────────────────────────── */
+
+.menu-acoes-wrapper {
+    margin-left: auto; /* empurra para a direita */
+}
+
+.btn-menu-acoes {
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    color: #666;
+}
+
+.menu-acoes-pontos {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    line-height: 1;
+}
+
+.menu-acoes-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    left: auto;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    padding: 4px;
+    min-width: 180px;
+    z-index: 100;
+}
+
+.menu-acoes-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+}
+
+.menu-acoes-item svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+.menu-acoes-item:hover {
+    background: #f5f5f5;
+}
+
+.menu-acoes-item-perigo {
+    color: #e53e3e;
+}
+
+.menu-acoes-item-perigo:hover {
+    background: #fff0f0;
+}
+
+/* ── Estado vazio (nenhuma nota selecionada) ────────────────────────────── */
+
+.editor-vazio {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #bbb;
+    gap: 0.75rem;
+}
+
+.editor-vazio svg {
+    width: 3rem;
+    height: 3rem;
+}
+
+.editor-vazio p {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.btn-criar-primeira {
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-criar-primeira:hover {
+    background: #333;
+}
+
+/* ── Modal Mover ─────────────────────────────────────────────────────────── */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-mover {
+    background: #fff;
+    border-radius: 14px;
+    width: 560px;
+    max-width: 92vw;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+}
+
+.modal-titulo {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.modal-nota-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f0f0f0;
+    border-radius: 6px;
+    padding: 3px 10px 3px 7px;
+    font-size: 0.82rem;
+    color: #444;
+    max-width: 300px;
+    overflow: hidden;
+}
+
+.modal-nota-chip svg {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex-shrink: 0;
+    color: #666;
+}
+
+.modal-nota-chip span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modal-fechar {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #aaa;
+    padding: 4px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    transition: background 0.12s;
+}
+
+.modal-fechar:hover {
+    background: #f0f0f0;
+    color: #444;
+}
+
+.modal-fechar svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.modal-busca-wrapper {
+    position: relative;
+    padding: 1rem 1.25rem 0.5rem;
+    flex-shrink: 0;
+}
+
+.modal-busca-input {
+    width: 100%;
+    border: 2px solid #2563eb;
+    border-radius: 8px;
+    padding: 0.6rem 2.5rem 0.6rem 1rem;
+    font-size: 0.9rem;
+    outline: none;
+    color: #1a1a1a;
+    box-sizing: border-box;
+}
+
+.modal-busca-input::placeholder {
+    color: #bbb;
+}
+
+.modal-busca-icone {
+    position: absolute;
+    right: 1.9rem;
+    top: 50%;
+    transform: translateY(-20%);
+    width: 1rem;
+    height: 1rem;
+    color: #aaa;
+    pointer-events: none;
+}
+
+.modal-lista {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem 0.75rem;
+}
+
+.modal-caderno-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    background: none;
+    border: none;
+    border-radius: 7px;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+}
+
+.modal-caderno-item svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: #888;
+    flex-shrink: 0;
+}
+
+.modal-caderno-item:hover {
+    background: #f5f5f5;
+}
+
+.modal-caderno-item.selecionado {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.modal-caderno-item.selecionado svg {
+    color: #1d4ed8;
+}
+
+.caderno-atual-badge {
+    margin-left: auto;
+    font-size: 0.72rem;
+    color: #aaa;
+    background: #f0f0f0;
+    border-radius: 10px;
+    padding: 1px 7px;
+}
+
+.modal-vazio {
+    text-align: center;
+    color: #bbb;
+    font-size: 0.875rem;
+    padding: 1.5rem 0;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0.9rem 1.25rem;
+    border-top: 1px solid #f0f0f0;
+    flex-shrink: 0;
+}
+
+.modal-btn-cancelar {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 0.45rem 1.1rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    color: #444;
+    transition: background 0.12s;
+}
+
+.modal-btn-cancelar:hover {
+    background: #f5f5f5;
+}
+
+.modal-btn-pronto {
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.45rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.modal-btn-pronto:hover:not(:disabled) {
+    background: #333;
+}
+
+.modal-btn-pronto:disabled {
+    background: #d0d0d0;
+    cursor: default;
+}
