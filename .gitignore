@@ -1,6 +1,11 @@
 ## Claude Code
 .claude/
 
+## Banco de dados
+*.db
+*.db-shm
+*.db-wal
+
 ## .NET / Blazor
 bin/
 obj/

@@ -1,3 +1,6 @@
+using Evenote.Data;
+using Microsoft.EntityFrameworkCore;
+
 namespace Evenote.Services;
 
 // ── Modelos ──────────────────────────────────────────────────────────────────
@@ -18,70 +21,41 @@ public class Nota
     public string Conteudo { get; set; } = ""; // HTML
     public DateTime AtualizadoEm { get; set; } = DateTime.Now;
     public bool Excluida { get; set; } = false;
-    public Guid CadernoId { get; set; } // toda nota pertence a um caderno
+    public Guid CadernoId { get; set; }
 }
 
 // ── Serviço ───────────────────────────────────────────────────────────────────
 
 /// <summary>
 /// Serviço Scoped: uma instância por conexão SignalR (por aba do browser).
-/// Centraliza notas e cadernos para que todas as páginas compartilhem o mesmo estado.
+/// Centraliza notas e cadernos via EF Core + SQLite.
 /// </summary>
 public class NotaService
 {
-    // Caderno padrão criado na inicialização
-    private readonly Caderno _cadernoPrincipal = new()
+    private readonly AppDbContext _db;
+    private readonly Guid _cadernoPrincipalId;
+
+    public NotaService(AppDbContext db)
     {
-        Nome = "Caderno Principal",
-        CriadoEm = DateTime.Now.AddHours(-3),
-        AtualizadoEm = DateTime.Now.AddHours(-3)
-    };
-
-    private readonly List<Caderno> _cadernos;
-    private readonly List<Nota> _notas;
-
-    public NotaService()
-    {
-        _cadernos = new List<Caderno> { _cadernoPrincipal };
-
-        // Notas de exemplo, todas vinculadas ao caderno principal
-        _notas = new List<Nota>
-        {
-            new Nota
-            {
-                Titulo = "MBA - IA Generativa e Engenharia de Prompts",
-                Conteudo = "<h1>MBA - IA GENERATIVA E ENGENHARIA DE PROMPTS COM LLMs</h1><h2>IA Generativa (o que é)</h2><ol><li>IA Generativa é um tipo de inteligência artificial capaz de <strong>criar conteúdo novo</strong>.</li><li>Em vez de apenas classificar ou prever rótulos, ela <strong>gera</strong> texto, imagens, áudio, vídeo e código.</li><li>Ela aprende padrões a partir de grandes volumes de dados (ex.: textos da internet, livros, código).</li><li>A partir desse aprendizado, produz saídas <strong>parecidas com as que veria nos dados</strong>, mas não \"copia\" literalmente.</li></ol>",
-                AtualizadoEm = DateTime.Now.AddHours(-4),
-                CadernoId = _cadernoPrincipal.Id
-            },
-            new Nota
-            {
-                Titulo = "Coisas a se fazer",
-                Conteudo = "<p>Boas-vindas à sua nota de tarefas! Adicione suas tarefas aqui.</p><ul><li>Estudar Blazor</li><li>Criar projeto Evenote</li></ul>",
-                AtualizadoEm = DateTime.Now.AddHours(-8),
-                CadernoId = _cadernoPrincipal.Id
-            },
-            new Nota
-            {
-                Titulo = "2026/04/10",
-                Conteudo = "<p>Fiz extração de um sisu. R$ 400,00. Depois fiquei em casa deitado com remédios para não ter ressaca.</p>",
-                AtualizadoEm = DateTime.Now.AddHours(-9),
-                CadernoId = _cadernoPrincipal.Id
-            }
-        };
+        _db = db;
+        _cadernoPrincipalId = db.Cadernos.OrderBy(c => c.CriadoEm).First().Id;
     }
 
     // ── Cadernos ─────────────────────────────────────────────────────────────
 
-    public IReadOnlyList<Caderno> Cadernos => _cadernos.AsReadOnly();
+    public IReadOnlyList<Caderno> Cadernos =>
+        _db.Cadernos.OrderBy(c => c.CriadoEm).ToList();
 
     public Caderno? ObterCaderno(Guid id) =>
-        _cadernos.FirstOrDefault(c => c.Id == id);
+        _db.Cadernos.Find(id);
+
+    public Guid IdCadernoPrincipal => _cadernoPrincipalId;
 
     public Caderno AdicionarCaderno(string nome)
     {
         var caderno = new Caderno { Nome = nome };
-        _cadernos.Add(caderno);
+        _db.Cadernos.Add(caderno);
+        _db.SaveChanges();
         return caderno;
     }
 
@@ -89,38 +63,63 @@ public class NotaService
     {
         caderno.Nome = novoNome;
         caderno.AtualizadoEm = DateTime.Now;
+        _db.SaveChanges();
     }
 
     public void ExcluirCaderno(Caderno caderno)
     {
         // Move as notas do caderno para o principal antes de excluir
-        foreach (var nota in _notas.Where(n => n.CadernoId == caderno.Id))
-            nota.CadernoId = _cadernoPrincipal.Id;
+        var notasDoCaderno = _db.Notas.Where(n => n.CadernoId == caderno.Id).ToList();
+        foreach (var nota in notasDoCaderno)
+            nota.CadernoId = _cadernoPrincipalId;
 
-        _cadernos.Remove(caderno);
+        _db.Cadernos.Remove(caderno);
+        _db.SaveChanges();
     }
 
     public int ContarNotasNoCaderno(Guid cadernoId) =>
-        _notas.Count(n => n.CadernoId == cadernoId && !n.Excluida);
+        _db.Notas.Count(n => n.CadernoId == cadernoId && !n.Excluida);
 
     // ── Notas ────────────────────────────────────────────────────────────────
 
-    public List<Nota> NotasAtivas => _notas.Where(n => !n.Excluida).ToList();
+    public List<Nota> NotasAtivas =>
+        _db.Notas.Where(n => !n.Excluida).ToList();
 
-    public List<Nota> NotasExcluidas => _notas.Where(n => n.Excluida).ToList();
+    public List<Nota> NotasExcluidas =>
+        _db.Notas.Where(n => n.Excluida).ToList();
 
-    public Guid IdCadernoPrincipal => _cadernoPrincipal.Id;
+    public void Adicionar(Nota nota)
+    {
+        _db.Notas.Add(nota);
+        _db.SaveChanges();
+    }
 
-    public void Adicionar(Nota nota) => _notas.Add(nota);
+    public void MoverParaLixeira(Nota nota)
+    {
+        nota.Excluida = true;
+        nota.AtualizadoEm = DateTime.Now;
+        _db.SaveChanges();
+    }
 
-    public void MoverParaLixeira(Nota nota) => nota.Excluida = true;
+    public void Restaurar(Nota nota)
+    {
+        nota.Excluida = false;
+        _db.SaveChanges();
+    }
 
-    public void Restaurar(Nota nota) => nota.Excluida = false;
-
-    public void ExcluirDefinitivamente(Nota nota) => _notas.Remove(nota);
+    public void ExcluirDefinitivamente(Nota nota)
+    {
+        _db.Notas.Remove(nota);
+        _db.SaveChanges();
+    }
 
     public void EsvaziarLixeira()
     {
-        _notas.RemoveAll(n => n.Excluida);
+        _db.Notas.Where(n => n.Excluida).ExecuteDelete();
     }
+
+    /// <summary>
+    /// Persiste alterações rastreadas pelo EF Core (ex.: título e conteúdo editados na UI).
+    /// </summary>
+    public void SalvarAlteracoes() => _db.SaveChanges();
 }

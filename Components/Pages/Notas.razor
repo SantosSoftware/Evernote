@@ -469,6 +469,7 @@
     {
         if (notaSelecionada == null || _cadernoDestino == null) return;
         notaSelecionada.CadernoId = _cadernoDestino.Id;
+        NotaService.SalvarAlteracoes();
         _mostrarModalMover = false;
         _cadernoDestino = null;
     }
@@ -545,6 +546,7 @@
             var conteudo = await JS.InvokeAsync<string>("evenoteEditor.getContent", editorRef);
             notaSelecionada.Conteudo = conteudo;
             // Não atualiza AtualizadoEm aqui para não reordenar a lista durante edição
+            NotaService.SalvarAlteracoes();
         }
         catch { /* editor pode não estar montado ainda */ }
     }
