@@ -1,6 +1,9 @@
 ## Claude Code
 .claude/
 
+## Credenciais locais
+appsettings.Development.json
+
 ## Banco de dados
 *.db
 *.db-shm

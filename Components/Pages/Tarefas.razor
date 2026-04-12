@@ -122,6 +122,15 @@
                                     @tarefa.Prioridade
                                 </span>
                             }
+                            @if (tarefa.Recorrencia != TipoRecorrencia.Nenhuma)
+                            {
+                                <span class="tarefa-recorrencia-badge" title="@ResumirRecorrenciaTarefa(tarefa)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                         stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                                    </svg>
+                                </span>
+                            }
                         </div>
                     </div>
 
@@ -155,7 +164,7 @@
 @if (_modalAberto)
 {
     <div class="modal-overlay" @onclick="FecharModal">
-        <div class="modal" @onclick:stopPropagation="true">
+        <div class="modal-dialogo" @onclick:stopPropagation="true">
             <div class="modal-cabecalho">
                 <h2 class="modal-titulo">@(_tarefaEditando == null ? "Nova Tarefa" : "Editar Tarefa")</h2>
                 <button class="modal-fechar" @onclick="FecharModal">
@@ -255,6 +264,19 @@
                         @(_form.Sinalizada ? "Sinalizada" : "Não sinalizada")
                     </button>
                 </div>
+
+                <!-- Recorrência -->
+                <div class="campo campo-sinalizar">
+                    <label class="campo-label">Recorrência</label>
+                    <button class="toggle-sinalizar @(_form.Recorrencia != TipoRecorrencia.Nenhuma ? "ativo" : "")"
+                            @onclick="AbrirRecorrencia">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                        </svg>
+                        @(_form.Recorrencia == TipoRecorrencia.Nenhuma ? "Sem recorrência" : ResumirRecorrenciaForm())
+                    </button>
+                </div>
             </div>
 
             <div class="modal-rodape">
@@ -262,6 +284,99 @@
                 <button class="btn-salvar" @onclick="Salvar" disabled="@(string.IsNullOrWhiteSpace(_form.Titulo))">
                     @(_tarefaEditando == null ? "Criar tarefa" : "Salvar")
                 </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Painel de Recorrência -->
+@if (_recorrenciaAberta)
+{
+    <div class="recorrencia-overlay" @onclick="CancelarRecorrencia">
+        <div class="recorrencia-dialogo" @onclick:stopPropagation="true">
+            <h2 class="recorrencia-titulo">Recorrência personalizada</h2>
+
+            <!-- Repete -->
+            <div class="rec-campo">
+                <label class="rec-label">Repete</label>
+                <select class="rec-select" @bind="_recTipo">
+                    <option value="@TipoRecorrencia.Diaria">Diariamente</option>
+                    <option value="@TipoRecorrencia.Semanal">Semanalmente</option>
+                    <option value="@TipoRecorrencia.Mensal">Mensalmente</option>
+                    <option value="@TipoRecorrencia.Anual">Anualmente</option>
+                </select>
+            </div>
+
+            <!-- Intervalo -->
+            <div class="rec-campo">
+                <label class="rec-label">Intervalo</label>
+                <div class="rec-intervalo">
+                    <div class="rec-spinner">
+                        <button class="rec-spinner-btn" @onclick="() => _recIntervalo = Math.Max(1, _recIntervalo - 1)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                        </button>
+                        <span class="rec-spinner-val">@_recIntervalo</span>
+                        <button class="rec-spinner-btn" @onclick="() => _recIntervalo++">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                    </div>
+                    <span class="rec-unidade">@UnidadeIntervalo()</span>
+                </div>
+            </div>
+
+            <!-- Nos dias (só para semanal) -->
+            @if (_recTipo == TipoRecorrencia.Semanal)
+            {
+                <div class="rec-campo">
+                    <label class="rec-label">Nos dias</label>
+                    <div class="rec-dias">
+                        @foreach (var dia in _diasSemana)
+                        {
+                            var selecionado = _recDias.Contains(dia.Key);
+                            <button class="rec-dia @(selecionado ? "rec-dia-ativo" : "")"
+                                    @onclick="() => ToggleDia(dia.Key)">
+                                @dia.Value
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Começa em -->
+            <div class="rec-campo">
+                <label class="rec-label">Começa em</label>
+                <input class="rec-input-data" type="date"
+                       value="@(_recInicio.ToString("yyyy-MM-dd"))"
+                       @onchange="e => _recInicio = string.IsNullOrEmpty(e.Value?.ToString()) ? DateTime.Today : DateTime.Parse(e.Value!.ToString()!)" />
+            </div>
+
+            <!-- Termina em -->
+            <div class="rec-campo">
+                <label class="rec-label">Termina em</label>
+                <div class="rec-termina">
+                    <label class="rec-radio-label">
+                        <input type="radio" name="termina" checked="@_recTerminaNunca"
+                               @onchange="() => _recTerminaNunca = true" />
+                        Nunca
+                    </label>
+                    <label class="rec-radio-label">
+                        <input type="radio" name="termina" checked="@(!_recTerminaNunca)"
+                               @onchange="() => _recTerminaNunca = false" />
+                        Em
+                        <input class="rec-input-data" type="date"
+                               disabled="@_recTerminaNunca"
+                               value="@(_recFim?.ToString("yyyy-MM-dd") ?? "")"
+                               @onchange="e => _recFim = string.IsNullOrEmpty(e.Value?.ToString()) ? null : (DateTime?)DateTime.Parse(e.Value!.ToString()!)" />
+                    </label>
+                </div>
+            </div>
+
+            <!-- Resumo -->
+            <div class="rec-resumo">@ResumirRecorrenciaForm()</div>
+
+            <div class="rec-rodape">
+                <button class="btn-cancelar" @onclick="CancelarRecorrencia">Cancelar</button>
+                <button class="btn-salvar" @onclick="ConfirmarRecorrencia">Pronto</button>
             </div>
         </div>
     </div>
@@ -275,6 +390,26 @@
 
     private FormTarefa _form = new();
 
+    // ── Recorrência ──────────────────────────────────────────────────────────
+    private bool _recorrenciaAberta = false;
+    private TipoRecorrencia _recTipo = TipoRecorrencia.Semanal;
+    private int _recIntervalo = 1;
+    private HashSet<DayOfWeek> _recDias = new();
+    private DateTime _recInicio = DateTime.Today;
+    private DateTime? _recFim = null;
+    private bool _recTerminaNunca = true;
+
+    private static readonly Dictionary<DayOfWeek, string> _diasSemana = new()
+    {
+        { DayOfWeek.Sunday,    "D" },
+        { DayOfWeek.Monday,    "S" },
+        { DayOfWeek.Tuesday,   "T" },
+        { DayOfWeek.Wednesday, "Q" },
+        { DayOfWeek.Thursday,  "Q" },
+        { DayOfWeek.Friday,    "S" },
+        { DayOfWeek.Saturday,  "S" },
+    };
+
     private DateTime ProximaSemana =>
         DateTime.Today.AddDays(7 - (int)DateTime.Today.DayOfWeek + 1);
 
@@ -286,6 +421,10 @@
         public string Hora { get; set; } = "";
         public Prioridade Prioridade { get; set; } = Prioridade.Nenhuma;
         public bool Sinalizada { get; set; } = false;
+        public TipoRecorrencia Recorrencia { get; set; } = TipoRecorrencia.Nenhuma;
+        public int IntervaloRecorrencia { get; set; } = 1;
+        public HashSet<DayOfWeek> DiasSemanais { get; set; } = new();
+        public DateTime? RecorrenciaFim { get; set; }
     }
 
     private static string FormatarData(DateTime dt) =>
@@ -328,17 +467,113 @@
         _tarefaEditando = tarefa;
         _form = new FormTarefa
         {
-            Titulo         = tarefa.Titulo,
-            Descricao      = tarefa.Descricao,
-            DataVencimento = tarefa.DataVencimento?.Date,
-            Hora           = tarefa.DataVencimento?.TimeOfDay == TimeSpan.Zero ? "" : tarefa.DataVencimento?.ToString("HH:mm") ?? "",
-            Prioridade     = tarefa.Prioridade,
-            Sinalizada     = tarefa.Sinalizada,
+            Titulo              = tarefa.Titulo,
+            Descricao           = tarefa.Descricao,
+            DataVencimento      = tarefa.DataVencimento?.Date,
+            Hora                = tarefa.DataVencimento?.TimeOfDay == TimeSpan.Zero ? "" : tarefa.DataVencimento?.ToString("HH:mm") ?? "",
+            Prioridade          = tarefa.Prioridade,
+            Sinalizada          = tarefa.Sinalizada,
+            Recorrencia         = tarefa.Recorrencia,
+            IntervaloRecorrencia= tarefa.IntervaloRecorrencia,
+            DiasSemanais        = DeserializarDias(tarefa.DiasSemanais),
+            RecorrenciaFim      = tarefa.RecorrenciaFim,
         };
         _modalAberto = true;
     }
 
     private void FecharModal() => _modalAberto = false;
+
+    // ── Recorrência ──────────────────────────────────────────────────────────
+
+    private void AbrirRecorrencia()
+    {
+        _recTipo         = _form.Recorrencia == TipoRecorrencia.Nenhuma ? TipoRecorrencia.Semanal : _form.Recorrencia;
+        _recIntervalo    = _form.IntervaloRecorrencia < 1 ? 1 : _form.IntervaloRecorrencia;
+        _recDias         = new HashSet<DayOfWeek>(_form.DiasSemanais);
+        _recInicio       = _form.DataVencimento ?? DateTime.Today;
+        _recFim          = _form.RecorrenciaFim;
+        _recTerminaNunca = _form.RecorrenciaFim == null;
+        _recorrenciaAberta = true;
+    }
+
+    private void CancelarRecorrencia() => _recorrenciaAberta = false;
+
+    private void ConfirmarRecorrencia()
+    {
+        _form.Recorrencia          = _recTipo;
+        _form.IntervaloRecorrencia = _recIntervalo;
+        _form.DiasSemanais         = new HashSet<DayOfWeek>(_recDias);
+        _form.RecorrenciaFim       = _recTerminaNunca ? null : _recFim;
+        _recorrenciaAberta = false;
+    }
+
+    private void ToggleDia(DayOfWeek dia)
+    {
+        if (!_recDias.Remove(dia)) _recDias.Add(dia);
+    }
+
+    private string UnidadeIntervalo() => _recTipo switch
+    {
+        TipoRecorrencia.Diaria  => _recIntervalo == 1 ? "dia"    : "dias",
+        TipoRecorrencia.Semanal => _recIntervalo == 1 ? "semana" : "semanas",
+        TipoRecorrencia.Mensal  => _recIntervalo == 1 ? "mês"    : "meses",
+        TipoRecorrencia.Anual   => _recIntervalo == 1 ? "ano"    : "anos",
+        _ => ""
+    };
+
+    private string ResumirRecorrenciaForm()
+    {
+        var tipo      = _recorrenciaAberta ? _recTipo      : _form.Recorrencia;
+        var intervalo = _recorrenciaAberta ? _recIntervalo : _form.IntervaloRecorrencia;
+        var dias      = _recorrenciaAberta ? _recDias      : _form.DiasSemanais;
+
+        return tipo switch
+        {
+            TipoRecorrencia.Nenhuma => "Sem recorrência",
+            TipoRecorrencia.Diaria  => intervalo == 1 ? "Diariamente" : $"A cada {intervalo} dias",
+            TipoRecorrencia.Semanal => GerarResumoSemanal(intervalo, dias),
+            TipoRecorrencia.Mensal  => intervalo == 1 ? "Mensalmente" : $"A cada {intervalo} meses",
+            TipoRecorrencia.Anual   => "Anualmente",
+            _ => ""
+        };
+    }
+
+    private static string ResumirRecorrenciaTarefa(Tarefa t) => t.Recorrencia switch
+    {
+        TipoRecorrencia.Diaria  => t.IntervaloRecorrencia == 1 ? "Diariamente" : $"A cada {t.IntervaloRecorrencia} dias",
+        TipoRecorrencia.Semanal => GerarResumoSemanal(t.IntervaloRecorrencia, DeserializarDias(t.DiasSemanais)),
+        TipoRecorrencia.Mensal  => t.IntervaloRecorrencia == 1 ? "Mensalmente" : $"A cada {t.IntervaloRecorrencia} meses",
+        TipoRecorrencia.Anual   => "Anualmente",
+        _ => ""
+    };
+
+    private static string GerarResumoSemanal(int intervalo, IEnumerable<DayOfWeek> dias)
+    {
+        var lista = dias.OrderBy(d => (int)d).Select(NomeDia).ToList();
+        var diasStr = lista.Count == 0 ? "" : string.Join(", ", lista);
+        var prefixo = intervalo == 1 ? "Semanal" : $"A cada {intervalo} semanas";
+        return lista.Count == 0 ? $"{prefixo}." : $"{prefixo} em {diasStr}.";
+    }
+
+    private static string NomeDia(DayOfWeek d) => d switch
+    {
+        DayOfWeek.Sunday    => "Domingo",
+        DayOfWeek.Monday    => "Segunda-feira",
+        DayOfWeek.Tuesday   => "Terça-feira",
+        DayOfWeek.Wednesday => "Quarta-feira",
+        DayOfWeek.Thursday  => "Quinta-feira",
+        DayOfWeek.Friday    => "Sexta-feira",
+        DayOfWeek.Saturday  => "Sábado",
+        _ => ""
+    };
+
+    private static HashSet<DayOfWeek> DeserializarDias(string raw) =>
+        new(raw.Split(',', StringSplitOptions.RemoveEmptyEntries)
+               .Select(s => int.TryParse(s, out var n) ? (DayOfWeek?)n : null)
+               .Where(d => d.HasValue).Select(d => d!.Value));
+
+    private static string SerializarDias(IEnumerable<DayOfWeek> dias) =>
+        string.Join(",", dias.Cast<int>().OrderBy(d => d));
 
     private DateTime? CombinarDataHora()
     {
@@ -358,20 +593,28 @@
         {
             TarefaService.Adicionar(new Tarefa
             {
-                Titulo         = _form.Titulo.Trim(),
-                Descricao      = _form.Descricao,
-                DataVencimento = dataHora,
-                Prioridade     = _form.Prioridade,
-                Sinalizada     = _form.Sinalizada,
+                Titulo               = _form.Titulo.Trim(),
+                Descricao            = _form.Descricao,
+                DataVencimento       = dataHora,
+                Prioridade           = _form.Prioridade,
+                Sinalizada           = _form.Sinalizada,
+                Recorrencia          = _form.Recorrencia,
+                IntervaloRecorrencia = _form.IntervaloRecorrencia,
+                DiasSemanais         = SerializarDias(_form.DiasSemanais),
+                RecorrenciaFim       = _form.RecorrenciaFim,
             });
         }
         else
         {
-            _tarefaEditando.Titulo         = _form.Titulo.Trim();
-            _tarefaEditando.Descricao      = _form.Descricao;
-            _tarefaEditando.DataVencimento = dataHora;
-            _tarefaEditando.Prioridade     = _form.Prioridade;
-            _tarefaEditando.Sinalizada     = _form.Sinalizada;
+            _tarefaEditando.Titulo               = _form.Titulo.Trim();
+            _tarefaEditando.Descricao            = _form.Descricao;
+            _tarefaEditando.DataVencimento       = dataHora;
+            _tarefaEditando.Prioridade           = _form.Prioridade;
+            _tarefaEditando.Sinalizada           = _form.Sinalizada;
+            _tarefaEditando.Recorrencia          = _form.Recorrencia;
+            _tarefaEditando.IntervaloRecorrencia = _form.IntervaloRecorrencia;
+            _tarefaEditando.DiasSemanais         = SerializarDias(_form.DiasSemanais);
+            _tarefaEditando.RecorrenciaFim       = _form.RecorrenciaFim;
             TarefaService.SalvarAlteracoes();
         }
 

@@ -46,6 +46,460 @@ h1:focus {
         content: "An error has occurred."
     }
 
+/* ── Modal de Tarefas ────────────────────────────────────────────────────────── */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-dialogo {
+    background: #fff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    overflow: hidden;
+}
+
+.modal-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem 0;
+}
+
+.modal-titulo {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.modal-fechar {
+    width: 2rem;
+    height: 2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.modal-fechar:hover { color: #1a1a1a; background: #f0f0f0; }
+.modal-fechar svg   { width: 1.1rem; height: 1.1rem; }
+
+.modal-corpo {
+    padding: 1.25rem 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.campo-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.campo-input,
+.campo-textarea {
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.93rem;
+    color: #1a1a1a;
+    background: #fafafa;
+    outline: none;
+    font-family: inherit;
+    resize: none;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.campo-input:focus,
+.campo-textarea:focus {
+    border-color: #aaa;
+    background: #fff;
+}
+
+.chips-data,
+.chips-prioridade {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.chip {
+    padding: 0.35rem 0.75rem;
+    background: #f0f0f0;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    font-size: 0.83rem;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.chip:hover    { background: #e8e8e8; color: #1a1a1a; }
+.chip-ativo    { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+.chip-prioridade-baixa.chip-ativo  { background: #2e7d32; border-color: #2e7d32; }
+.chip-prioridade-media.chip-ativo  { background: #f57f17; border-color: #f57f17; }
+.chip-prioridade-alta.chip-ativo   { background: #c62828; border-color: #c62828; }
+
+.campo-data {
+    padding: 0.35rem 0.6rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    font-size: 0.83rem;
+    color: #555;
+    background: #f0f0f0;
+    outline: none;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.campo-data:focus { border-color: #aaa; }
+
+.campo-hora-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+}
+
+.campo-hora-wrap svg {
+    width: 1rem;
+    height: 1rem;
+    color: #888;
+    flex-shrink: 0;
+}
+
+.campo-hora {
+    padding: 0.35rem 0.6rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    font-size: 0.83rem;
+    color: #555;
+    background: #f0f0f0;
+    outline: none;
+    font-family: inherit;
+    cursor: pointer;
+    width: 8rem;
+}
+
+.campo-hora:focus { border-color: #aaa; background: #fff; }
+
+.btn-limpar-hora {
+    width: 1.4rem;
+    height: 1.4rem;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: #bbb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 0.15s ease;
+}
+
+.btn-limpar-hora:hover { color: #555; }
+.btn-limpar-hora svg   { width: 0.8rem; height: 0.8rem; }
+
+.campo-sinalizar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.toggle-sinalizar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    background: #f0f0f0;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #555;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+}
+
+.toggle-sinalizar:hover { background: #e8e8e8; }
+.toggle-sinalizar.ativo { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+.toggle-sinalizar svg   { width: 1rem; height: 1rem; }
+
+.modal-rodape {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem 1.25rem;
+    border-top: 1px solid #ebebeb;
+}
+
+.btn-cancelar {
+    padding: 0.5rem 1rem;
+    background: none;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    color: #555;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s ease;
+}
+
+.btn-cancelar:hover { background: #f5f5f5; }
+
+.btn-salvar {
+    padding: 0.5rem 1.1rem;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background-color 0.15s ease;
+}
+
+.btn-salvar:hover:not(:disabled) { background: #333; }
+.btn-salvar:disabled              { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Fim Modal de Tarefas ────────────────────────────────────────────────────── */
+
+/* ── Painel de Recorrência ───────────────────────────────────────────────────── */
+
+.recorrencia-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    padding: 1rem;
+}
+
+.recorrencia-dialogo {
+    background: #fff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding: 1.5rem;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.recorrencia-titulo {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.rec-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.rec-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.rec-select {
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.93rem;
+    color: #1a1a1a;
+    background: #fafafa;
+    outline: none;
+    font-family: inherit;
+    cursor: pointer;
+    appearance: auto;
+}
+
+.rec-select:focus { border-color: #aaa; }
+
+.rec-intervalo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.rec-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 3rem;
+}
+
+.rec-spinner-btn {
+    width: 100%;
+    height: 1.6rem;
+    background: #fafafa;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease;
+}
+
+.rec-spinner-btn:hover { background: #f0f0f0; }
+.rec-spinner-btn svg   { width: 0.8rem; height: 0.8rem; color: #555; }
+
+.rec-spinner-val {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    padding: 0.2rem 0;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    width: 100%;
+    text-align: center;
+}
+
+.rec-unidade {
+    font-size: 0.93rem;
+    color: #555;
+}
+
+.rec-dias {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.rec-dia {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    border: 1px solid #e0e0e0;
+    background: #fafafa;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rec-dia:hover    { background: #f0f0f0; }
+.rec-dia-ativo    { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+.rec-input-data {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+    background: #fafafa;
+    outline: none;
+    font-family: inherit;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.rec-input-data:focus    { border-color: #aaa; }
+.rec-input-data:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.rec-termina {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.rec-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.93rem;
+    color: #1a1a1a;
+    cursor: pointer;
+}
+
+.rec-radio-label input[type=radio] { cursor: pointer; }
+
+.rec-resumo {
+    font-size: 0.9rem;
+    color: #555;
+    background: #f5f5f5;
+    padding: 0.6rem 0.85rem;
+    border-radius: 8px;
+    font-style: italic;
+}
+
+.rec-rodape {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 0.25rem;
+    border-top: 1px solid #ebebeb;
+}
+
+/* Badge de recorrência na lista */
+.tarefa-recorrencia-badge {
+    display: inline-flex;
+    align-items: center;
+    color: #888;
+}
+
+.tarefa-recorrencia-badge svg {
+    width: 0.85rem;
+    height: 0.85rem;
+}
+
+/* ── Fim Painel de Recorrência ───────────────────────────────────────────────── */
+
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }

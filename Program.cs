@@ -17,6 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Scoped = uma instância por conexão SignalR (por aba do browser)
 builder.Services.AddScoped<NotaService>();
 builder.Services.AddScoped<TarefaService>();
+builder.Services.AddHostedService<LembreteTarefaService>();
 
 var app = builder.Build();
 
