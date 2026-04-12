@@ -17,6 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Scoped = uma instância por conexão SignalR (por aba do browser)
 builder.Services.AddScoped<NotaService>();
 builder.Services.AddScoped<TarefaService>();
+builder.Services.AddScoped<CalendarioService>();
 builder.Services.AddHostedService<LembreteTarefaService>();
 
 var app = builder.Build();
@@ -30,6 +31,12 @@ using (var scope = app.Services.CreateScope())
     if (!db.Cadernos.Any())
     {
         db.Cadernos.Add(new Caderno { Nome = "Caderno Principal" });
+        db.SaveChanges();
+    }
+
+    if (!db.Calendarios.Any())
+    {
+        db.Calendarios.Add(new CalendarioLocal { Nome = "Alexandre Mello", Cor = "#f4a54a" });
         db.SaveChanges();
     }
 }

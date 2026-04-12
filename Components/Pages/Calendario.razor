@@ -1,7 +1,817 @@
 @page "/calendario"
+@rendermode InteractiveServer
+@using System.Globalization
+@inject CalendarioService CalendarioService
+@inject IJSRuntime JS
+@implements IDisposable
 
 <PageTitle>Calendário</PageTitle>
 
-<h1>Calendário</h1>
+<div class="calendario-layout" @onclick="FecharMenus">
 
-<p>Seu calendário aparecerá aqui.</p>
+    <!-- ── Sidebar esquerda ─────────────────────────────────────────────── -->
+    <div class="cal-sidebar" @onclick:stopPropagation="true">
+
+        <!-- Mini calendário -->
+        <div class="mini-cal">
+            <div class="mini-cal-header">
+                <span class="mini-cal-mes">@_miniCalRef.ToString("MMMM yyyy", _ptBR)</span>
+                <div class="mini-cal-nav">
+                    <button class="mini-cal-btn" @onclick="MiniCalAnterior" title="Mês anterior">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                    </button>
+                    <button class="mini-cal-btn" @onclick="MiniCalProximo" title="Próximo mês">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mini-cal-semana-header">
+                @foreach (var d in new[] { "D", "S", "T", "Q", "Q", "S", "S" })
+                {
+                    <span>@d</span>
+                }
+            </div>
+
+            <div class="mini-cal-grid">
+                @foreach (var dia in GetMiniCalDias())
+                {
+                    var classes = "mini-cal-dia"
+                        + (dia.Date == DateTime.Today ? " hoje" : "")
+                        + (dia.Date == _diaSelecionado.Date ? " selecionado" : "")
+                        + (dia.Month != _miniCalRef.Month ? " outro-mes" : "");
+                    var d = dia;
+                    <button class="@classes" @onclick="() => SelecionarDia(d)">
+                        @dia.Day
+                        @if (CalendarioService.TemEventoNoDia(dia))
+                        {
+                            <span class="mini-cal-ponto"></span>
+                        }
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Lista de calendários -->
+        <div class="cal-lista-secao">
+            <span class="cal-lista-titulo">Calendário do Evenote</span>
+            @foreach (var cal in CalendarioService.Calendarios)
+            {
+                <label class="cal-lista-item">
+                    <span class="cal-lista-cor" style="background: @cal.Cor"></span>
+                    <span class="cal-lista-nome">@cal.Nome</span>
+                </label>
+            }
+        </div>
+
+    </div>
+
+    <!-- ── Painel principal ──────────────────────────────────────────────── -->
+    <div class="cal-main" @onclick:stopPropagation="true">
+
+        <!-- Barra superior -->
+        <div class="cal-topbar">
+            <button class="btn-novo-evento" @onclick="AbrirModalNovoEvento">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                    <line x1="12" y1="14" x2="12" y2="18"/>
+                    <line x1="10" y1="16" x2="14" y2="16"/>
+                </svg>
+                Novo Evento
+            </button>
+
+            <!-- Seletor de vista -->
+            <div class="cal-view-selector @(_mostrarMenuVista ? "aberto" : "")"
+                 @onclick="ToggleMenuVista" @onclick:stopPropagation="true">
+                <span>@NomeVista(_vistaAtual)</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"/>
+                </svg>
+                @if (_mostrarMenuVista)
+                {
+                    <div class="cal-view-dropdown" @onclick:stopPropagation="true">
+                        @foreach (var v in new[] { VistaCalendario.Dia, VistaCalendario.Semana, VistaCalendario.Mes, VistaCalendario.Agenda })
+                        {
+                            var vi = v;
+                            <button class="cal-view-opcao @(_vistaAtual == vi ? "ativa" : "")"
+                                    @onclick="() => MudarVista(vi)">
+                                @NomeVista(vi)
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Cabeçalho de navegação -->
+        <div class="cal-dia-nav">
+            <span class="cal-dia-titulo">@TituloNavegacao</span>
+            <div class="cal-dia-controles">
+                <button class="btn-hoje" @onclick="IrParaHoje">Hoje</button>
+                <button class="btn-nav-seta" @onclick="NavAnterior" title="Anterior">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                </button>
+                <button class="btn-nav-seta" @onclick="NavProximo" title="Próximo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- ── Vista: Dia ──────────────────────────────────────────────────── -->
+        @if (_vistaAtual == VistaCalendario.Dia)
+        {
+            <div class="cal-grade-wrapper" @ref="_gradeRef">
+                <div class="cal-grade">
+                    <div class="cal-hora-col">
+                        @for (int h = 0; h < 24; h++)
+                        {
+                            <div class="cal-hora-label-cell">@(h == 0 ? "" : $"{h:D2}:00")</div>
+                        }
+                    </div>
+                    <div class="cal-eventos-col">
+                        @for (int h = 0; h < 24; h++)
+                        {
+                            <div class="cal-hora-linha"></div>
+                        }
+                        @if (_diaSelecionado.Date == DateTime.Today)
+                        {
+                            <div class="cal-linha-atual" style="top: @TopAtual()px">
+                                <span class="cal-linha-dot"></span>
+                            </div>
+                        }
+                        @foreach (var evt in _eventosDoDia)
+                        {
+                            var cal = CalendarioService.ObterCalendario(evt.CalendarioId);
+                            var cor = cal?.Cor ?? "#4285f4";
+                            var top = evt.DiaInteiro ? 0 : TopEvento(evt);
+                            var alt = evt.DiaInteiro ? (int)(24 * HoraPx) : AlturaEvento(evt);
+                            var ev = evt;
+                            <div class="cal-evento"
+                                 style="top: @(top)px; height: @(alt)px; border-left-color: @cor; background: @(cor + "22");"
+                                 @onclick="() => AbrirDetalhesEvento(ev)">
+                                <span class="cal-evento-titulo" style="color: @cor">@evt.Titulo</span>
+                                @if (!evt.DiaInteiro)
+                                {
+                                    <span class="cal-evento-horario" style="color: @cor">
+                                        @evt.Inicio.ToString("H:mm") – @evt.Fim.ToString("H:mm")
+                                    </span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else if (_vistaAtual == VistaCalendario.Semana)
+        {
+            <div class="cal-grade-wrapper" @ref="_gradeRef">
+                <div class="cal-grade-semana">
+                    <div class="cal-semana-header">
+                        <div class="cal-hora-col-semana"></div>
+                        @for (int d = 0; d < 7; d++)
+                        {
+                            var dia = SemanaInicio.AddDays(d);
+                            <div class="cal-semana-dia-header">
+                                <span class="cal-semana-dia-nome">@dia.ToString("ddd", _ptBR)</span>
+                                @{
+                                    var dd = dia;
+                                    var numClass = "cal-semana-dia-num-btn"
+                                        + (dia.Date == DateTime.Today ? " hoje" : "")
+                                        + (dia.Date == _diaSelecionado.Date && dia.Date != DateTime.Today ? " selecionado" : "");
+                                }
+                                <button class="@numClass" @onclick="() => SelecionarDia(dd)">@dia.Day</button>
+                            </div>
+                        }
+                    </div>
+                    <div class="cal-semana-body">
+                        <div class="cal-hora-col">
+                            @for (int h = 0; h < 24; h++)
+                            {
+                                <div class="cal-hora-label-cell">@(h == 0 ? "" : $"{h:D2}:00")</div>
+                            }
+                        </div>
+                        @for (int d = 0; d < 7; d++)
+                        {
+                            var dia = SemanaInicio.AddDays(d);
+                            var colClass = "cal-semana-col" + (dia.Date == DateTime.Today ? " hoje" : "");
+                            var eventosCol = _eventosDaSemana
+                                .Where(e => e.DiaInteiro
+                                    ? e.Inicio.Date <= dia.Date && e.Fim.Date >= dia.Date
+                                    : e.Inicio.Date == dia.Date)
+                                .ToList();
+                            <div class="@colClass">
+                                @for (int h = 0; h < 24; h++)
+                                {
+                                    <div class="cal-hora-linha"></div>
+                                }
+                                @if (dia.Date == DateTime.Today)
+                                {
+                                    <div class="cal-linha-atual" style="top: @TopAtual()px">
+                                        <span class="cal-linha-dot"></span>
+                                    </div>
+                                }
+                                @foreach (var evt in eventosCol)
+                                {
+                                    var cal = CalendarioService.ObterCalendario(evt.CalendarioId);
+                                    var cor = cal?.Cor ?? "#4285f4";
+                                    var top = evt.DiaInteiro ? 0 : TopEvento(evt);
+                                    var alt = evt.DiaInteiro ? (int)(24 * HoraPx) : AlturaEvento(evt);
+                                    var ev = evt;
+                                    <div class="cal-evento"
+                                         style="top: @(top)px; height: @(alt)px; border-left-color: @cor; background: @(cor + "22");"
+                                         @onclick="() => AbrirDetalhesEvento(ev)">
+                                        <span class="cal-evento-titulo" style="color: @cor">@evt.Titulo</span>
+                                        @if (!evt.DiaInteiro)
+                                        {
+                                            <span class="cal-evento-horario" style="color: @cor">
+                                                @evt.Inicio.ToString("H:mm") – @evt.Fim.ToString("H:mm")
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else if (_vistaAtual == VistaCalendario.Mes)
+        {
+            <div class="cal-mes-wrapper">
+                <div class="cal-mes-semana-header">
+                    @foreach (var dn in new[] { "Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb" })
+                    {
+                        <div>@dn</div>
+                    }
+                </div>
+                <div class="cal-mes-grid">
+                    @foreach (var dia in GetMiniCalDias())
+                    {
+                        var eventosdia = _eventosDoMes
+                            .Where(e => e.DiaInteiro
+                                ? e.Inicio.Date <= dia.Date && e.Fim.Date >= dia.Date
+                                : e.Inicio.Date == dia.Date)
+                            .ToList();
+                        var diaClass = "cal-mes-dia"
+                            + (dia.Date == DateTime.Today ? " hoje" : "")
+                            + (dia.Date == _diaSelecionado.Date ? " selecionado" : "")
+                            + (dia.Month != _miniCalRef.Month ? " outro-mes" : "");
+                        var d = dia;
+                        <div class="@diaClass" @onclick="() => SelecionarDia(d)">
+                            <span class="cal-mes-dia-num">@dia.Day</span>
+                            <div class="cal-mes-eventos">
+                                @foreach (var evt in eventosdia.Take(3))
+                                {
+                                    var cal = CalendarioService.ObterCalendario(evt.CalendarioId);
+                                    var cor = cal?.Cor ?? "#4285f4";
+                                    var ev = evt;
+                                    <div class="cal-mes-evento" style="background: @cor"
+                                         @onclick:stopPropagation="true" @onclick="() => AbrirDetalhesEvento(ev)">
+                                        @evt.Titulo
+                                    </div>
+                                }
+                                @if (eventosdia.Count > 3)
+                                {
+                                    <div class="cal-mes-mais">+@(eventosdia.Count - 3) mais</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="cal-agenda-wrapper">
+                @{
+                    var grupos = _eventosAgenda.GroupBy(e => e.Inicio.Date).ToList();
+                }
+                @if (!grupos.Any())
+                {
+                    <div class="cal-agenda-vazia">Nenhum evento nos próximos 90 dias</div>
+                }
+                @foreach (var grupo in grupos)
+                {
+                    <div class="cal-agenda-grupo">
+                        <div class="cal-agenda-data">
+                            <span class="cal-agenda-dia-num">@grupo.Key.Day</span>
+                            <div class="cal-agenda-data-info">
+                                <span class="cal-agenda-dia-nome">@grupo.Key.ToString("ddd", _ptBR)</span>
+                                <span class="cal-agenda-mes">@grupo.Key.ToString("MMM yyyy", _ptBR)</span>
+                            </div>
+                        </div>
+                        <div class="cal-agenda-eventos">
+                            @foreach (var evt in grupo)
+                            {
+                                var cal = CalendarioService.ObterCalendario(evt.CalendarioId);
+                                var cor = cal?.Cor ?? "#4285f4";
+                                var ev = evt;
+                                <div class="cal-agenda-evento" style="border-left-color: @cor"
+                                     @onclick="() => AbrirDetalhesEvento(ev)">
+                                    <span class="cal-agenda-evento-titulo">@evt.Titulo</span>
+                                    <span class="cal-agenda-evento-hora" style="color: @cor">
+                                        @(evt.DiaInteiro ? "Dia inteiro" : evt.Inicio.ToString("H:mm") + " – " + evt.Fim.ToString("H:mm"))
+                                    </span>
+                                    @if (cal != null)
+                                    {
+                                        <span class="cal-agenda-evento-cal" style="color: @cor">@cal.Nome</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+    </div>
+
+</div>
+
+<!-- ── Modal: Novo Evento ────────────────────────────────────────────────── -->
+@if (_mostrarModalEvento)
+{
+    <div class="modal-overlay" @onclick="FecharModalEvento">
+        <div class="modal-evento" @onclick:stopPropagation="true">
+
+            <input class="modal-evento-titulo"
+                   placeholder="Título do evento"
+                   @bind="_form.Titulo"
+                   @bind:event="oninput" />
+
+            <div class="modal-evento-corpo">
+
+                <!-- Início -->
+                <div class="modal-evento-linha">
+                    <svg class="modal-evento-icone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"/>
+                        <polyline points="12 7 12 12 15 15"/>
+                    </svg>
+                    <span class="modal-evento-label">Início</span>
+                    <input class="modal-evento-input-data" type="date" @bind="_form.DataInicio" />
+                    @if (!_form.DiaInteiro)
+                    {
+                        <input class="modal-evento-input-hora" type="time" @bind="_form.HoraInicio" />
+                    }
+                </div>
+
+                <!-- Dia inteiro -->
+                <div class="modal-evento-linha modal-evento-linha-check">
+                    <span class="modal-evento-icone"></span>
+                    <label class="modal-check-label">
+                        <input type="checkbox" @bind="_form.DiaInteiro" />
+                        Dia inteiro
+                    </label>
+                </div>
+
+                <!-- Fim -->
+                <div class="modal-evento-linha">
+                    <svg class="modal-evento-icone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"/>
+                        <polyline points="12 7 12 12 15 15"/>
+                    </svg>
+                    <span class="modal-evento-label">Fim</span>
+                    <input class="modal-evento-input-data" type="date" @bind="_form.DataFim" />
+                    @if (!_form.DiaInteiro)
+                    {
+                        <input class="modal-evento-input-hora" type="time" @bind="_form.HoraFim" />
+                    }
+                </div>
+
+                <!-- Calendário -->
+                <div class="modal-evento-linha">
+                    <svg class="modal-evento-icone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <span class="modal-evento-label">Calendário</span>
+                    <div class="modal-cal-selector">
+                        @{
+                            var calSel = CalendarioService.ObterCalendario(_form.CalendarioId);
+                        }
+                        <span class="modal-cal-cor" style="background: @(calSel?.Cor ?? "#4285f4")"></span>
+                        <select class="modal-cal-select" @bind="_form.CalendarioId">
+                            @foreach (var c in CalendarioService.Calendarios)
+                            {
+                                <option value="@c.Id">@c.Nome</option>
+                            }
+                        </select>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                             class="modal-cal-chevron">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-evento-footer">
+                <button class="modal-btn-cancelar" @onclick="FecharModalEvento">Cancelar</button>
+                <button class="modal-btn-criar"
+                        disabled="@string.IsNullOrWhiteSpace(_form.Titulo)"
+                        @onclick="CriarEvento">
+                    Criar evento
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ── Modal: Detalhes do Evento ─────────────────────────────────────────── -->
+@if (_eventoDetalhe != null)
+{
+    var cal = CalendarioService.ObterCalendario(_eventoDetalhe.CalendarioId);
+    var cor = cal?.Cor ?? "#4285f4";
+    <div class="modal-overlay" @onclick="() => _eventoDetalhe = null">
+        <div class="modal-detalhe" @onclick:stopPropagation="true"
+             style="border-top: 4px solid @cor">
+            <div class="modal-detalhe-header">
+                <span class="modal-detalhe-titulo">@_eventoDetalhe.Titulo</span>
+                <button class="modal-fechar" @onclick="() => _eventoDetalhe = null">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-detalhe-info">
+                @if (_eventoDetalhe.DiaInteiro)
+                {
+                    <span>@_eventoDetalhe.Inicio.ToString("dd/MM/yyyy", _ptBR) · Dia inteiro</span>
+                }
+                else
+                {
+                    <span>
+                        @_eventoDetalhe.Inicio.ToString("dd/MM/yyyy", _ptBR)
+                        · @_eventoDetalhe.Inicio.ToString("H:mm") – @_eventoDetalhe.Fim.ToString("H:mm")
+                    </span>
+                }
+                @if (cal != null)
+                {
+                    <span class="modal-detalhe-cal">
+                        <span class="modal-detalhe-cor" style="background: @cor"></span>
+                        @cal.Nome
+                    </span>
+                }
+            </div>
+            <div class="modal-detalhe-footer">
+                <button class="modal-btn-excluir" @onclick="ExcluirEvento">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                        <path d="M10 11v6M14 11v6"/>
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                    </svg>
+                    Excluir evento
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private static readonly CultureInfo _ptBR = new("pt-BR");
+    private const int HoraPx = 64;
+
+    private enum VistaCalendario { Dia, Semana, Mes, Agenda }
+    private VistaCalendario _vistaAtual = VistaCalendario.Dia;
+    private bool _mostrarMenuVista;
+
+    private DateTime _diaSelecionado = DateTime.Today;
+    private DateTime _miniCalRef = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime _now = DateTime.Now;
+
+    private List<Evento> _eventosDoDia = new();
+    private List<Evento> _eventosDaSemana = new();
+    private List<Evento> _eventosDoMes = new();
+    private List<Evento> _eventosAgenda = new();
+
+    private Evento? _eventoDetalhe;
+    private System.Timers.Timer? _timer;
+    private ElementReference _gradeRef;
+
+    // ── Formulário de novo evento ─────────────────────────────────────────
+
+    private bool _mostrarModalEvento;
+
+    private class FormEvento
+    {
+        public string Titulo { get; set; } = "";
+        public DateOnly DataInicio { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+        public TimeOnly HoraInicio { get; set; } = new TimeOnly(9, 0);
+        public DateOnly DataFim { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+        public TimeOnly HoraFim { get; set; } = new TimeOnly(10, 0);
+        public bool DiaInteiro { get; set; } = false;
+        public Guid CalendarioId { get; set; }
+    }
+
+    private FormEvento _form = new();
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────
+
+    protected override void OnInitialized()
+    {
+        CarregarEventos();
+
+        var cal = CalendarioService.PrimeiroCalendario;
+        if (cal != null) _form.CalendarioId = cal.Id;
+
+        _timer = new System.Timers.Timer(60_000);
+        _timer.Elapsed += async (_, _) =>
+        {
+            _now = DateTime.Now;
+            await InvokeAsync(StateHasChanged);
+        };
+        _timer.Start();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && (_vistaAtual == VistaCalendario.Dia || _vistaAtual == VistaCalendario.Semana))
+        {
+            var scrollHora = _diaSelecionado.Date == DateTime.Today
+                ? Math.Max(0, _now.Hour - 1)
+                : 8;
+            try
+            {
+                await JS.InvokeVoidAsync("evenoteCalendario.scrollTo", _gradeRef, scrollHora * HoraPx);
+            }
+            catch { }
+        }
+    }
+
+    // ── Vista ─────────────────────────────────────────────────────────────
+
+    private void MudarVista(VistaCalendario vista)
+    {
+        _vistaAtual = vista;
+        _mostrarMenuVista = false;
+        CarregarEventos();
+    }
+
+    private void ToggleMenuVista() => _mostrarMenuVista = !_mostrarMenuVista;
+    private void FecharMenus() => _mostrarMenuVista = false;
+
+    private static string NomeVista(VistaCalendario v) => v switch
+    {
+        VistaCalendario.Dia    => "Dia",
+        VistaCalendario.Semana => "Semana",
+        VistaCalendario.Mes    => "Mês",
+        VistaCalendario.Agenda => "Agenda",
+        _ => ""
+    };
+
+    private string TituloNavegacao => _vistaAtual switch
+    {
+        VistaCalendario.Dia    => _diaSelecionado.ToString("dddd, d 'de' MMMM 'de' yyyy", _ptBR),
+        VistaCalendario.Semana => TituloSemana(),
+        VistaCalendario.Mes    => _miniCalRef.ToString("MMMM 'de' yyyy", _ptBR),
+        VistaCalendario.Agenda => _diaSelecionado.ToString("MMMM 'de' yyyy", _ptBR),
+        _ => ""
+    };
+
+    private string TituloSemana()
+    {
+        var ini = GetSemanaInicio(_diaSelecionado);
+        var fim = ini.AddDays(6);
+        if (ini.Year != fim.Year)
+            return $"{ini.ToString("d 'de' MMM 'de' yyyy", _ptBR)} – {fim.ToString("d 'de' MMM 'de' yyyy", _ptBR)}";
+        if (ini.Month != fim.Month)
+            return $"{ini.ToString("d 'de' MMM", _ptBR)} – {fim.ToString("d 'de' MMM 'de' yyyy", _ptBR)}";
+        return $"{ini.Day} – {fim.ToString("d 'de' MMMM 'de' yyyy", _ptBR)}";
+    }
+
+    // ── Navegação ─────────────────────────────────────────────────────────
+
+    private void NavAnterior()
+    {
+        switch (_vistaAtual)
+        {
+            case VistaCalendario.Dia:
+                _diaSelecionado = _diaSelecionado.AddDays(-1);
+                _miniCalRef = new DateTime(_diaSelecionado.Year, _diaSelecionado.Month, 1);
+                break;
+            case VistaCalendario.Semana:
+                _diaSelecionado = _diaSelecionado.AddDays(-7);
+                _miniCalRef = new DateTime(_diaSelecionado.Year, _diaSelecionado.Month, 1);
+                break;
+            case VistaCalendario.Mes:
+                _miniCalRef = _miniCalRef.AddMonths(-1);
+                break;
+            case VistaCalendario.Agenda:
+                _diaSelecionado = _diaSelecionado.AddMonths(-1);
+                break;
+        }
+        CarregarEventos();
+    }
+
+    private void NavProximo()
+    {
+        switch (_vistaAtual)
+        {
+            case VistaCalendario.Dia:
+                _diaSelecionado = _diaSelecionado.AddDays(1);
+                _miniCalRef = new DateTime(_diaSelecionado.Year, _diaSelecionado.Month, 1);
+                break;
+            case VistaCalendario.Semana:
+                _diaSelecionado = _diaSelecionado.AddDays(7);
+                _miniCalRef = new DateTime(_diaSelecionado.Year, _diaSelecionado.Month, 1);
+                break;
+            case VistaCalendario.Mes:
+                _miniCalRef = _miniCalRef.AddMonths(1);
+                break;
+            case VistaCalendario.Agenda:
+                _diaSelecionado = _diaSelecionado.AddMonths(1);
+                break;
+        }
+        CarregarEventos();
+    }
+
+    private void IrParaHoje()
+    {
+        _diaSelecionado = DateTime.Today;
+        _miniCalRef = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        CarregarEventos();
+    }
+
+    private void SelecionarDia(DateTime dia)
+    {
+        _diaSelecionado = dia;
+        _miniCalRef = new DateTime(dia.Year, dia.Month, 1);
+        CarregarEventos();
+    }
+
+    private void MiniCalAnterior()
+    {
+        _miniCalRef = _miniCalRef.AddMonths(-1);
+        if (_vistaAtual == VistaCalendario.Mes) CarregarEventos();
+    }
+
+    private void MiniCalProximo()
+    {
+        _miniCalRef = _miniCalRef.AddMonths(1);
+        if (_vistaAtual == VistaCalendario.Mes) CarregarEventos();
+    }
+
+    private DateTime SemanaInicio => GetSemanaInicio(_diaSelecionado);
+
+    private static DateTime GetSemanaInicio(DateTime dia)
+    {
+        int diff = (7 + (int)dia.DayOfWeek - (int)DayOfWeek.Sunday) % 7;
+        return dia.Date.AddDays(-diff);
+    }
+
+    // ── Carregamento ──────────────────────────────────────────────────────
+
+    private void CarregarEventos()
+    {
+        switch (_vistaAtual)
+        {
+            case VistaCalendario.Dia:
+                _eventosDoDia = CalendarioService.EventosDoPeriodo(_diaSelecionado.Date, _diaSelecionado.Date);
+                break;
+            case VistaCalendario.Semana:
+                var ini = GetSemanaInicio(_diaSelecionado);
+                _eventosDaSemana = CalendarioService.EventosDoPeriodo(ini, ini.AddDays(6));
+                break;
+            case VistaCalendario.Mes:
+                var primeiro = new DateTime(_miniCalRef.Year, _miniCalRef.Month, 1);
+                var ultimo = primeiro.AddMonths(1).AddDays(-1);
+                _eventosDoMes = CalendarioService.EventosDoPeriodo(primeiro, ultimo);
+                break;
+            case VistaCalendario.Agenda:
+                _eventosAgenda = CalendarioService.EventosDoPeriodo(_diaSelecionado.Date, _diaSelecionado.Date.AddDays(90));
+                break;
+        }
+    }
+
+    // ── Mini calendário ───────────────────────────────────────────────────
+
+    private List<DateTime> GetMiniCalDias()
+    {
+        var dias = new List<DateTime>();
+        var primeiro = new DateTime(_miniCalRef.Year, _miniCalRef.Month, 1);
+        int offset = (int)primeiro.DayOfWeek;
+
+        for (int i = 0; i < offset; i++)
+            dias.Add(primeiro.AddDays(i - offset));
+
+        int totalDias = DateTime.DaysInMonth(_miniCalRef.Year, _miniCalRef.Month);
+        for (int d = 0; d < totalDias; d++)
+            dias.Add(primeiro.AddDays(d));
+
+        var ultimo = new DateTime(_miniCalRef.Year, _miniCalRef.Month, totalDias);
+        int fimPad = 6 - (int)ultimo.DayOfWeek;
+        for (int i = 1; i <= fimPad; i++)
+            dias.Add(ultimo.AddDays(i));
+
+        return dias;
+    }
+
+    // ── Posicionamento de eventos ─────────────────────────────────────────
+
+    private int TopEvento(Evento evt) =>
+        (int)((evt.Inicio.Hour * 60 + evt.Inicio.Minute) * HoraPx / 60.0);
+
+    private int AlturaEvento(Evento evt) =>
+        (int)Math.Max(28, (evt.Fim - evt.Inicio).TotalMinutes * HoraPx / 60.0);
+
+    private int TopAtual() =>
+        (int)((_now.Hour * 60 + _now.Minute) * HoraPx / 60.0);
+
+    // ── Modal de evento ───────────────────────────────────────────────────
+
+    private void AbrirModalNovoEvento()
+    {
+        var cal = CalendarioService.PrimeiroCalendario;
+        var agora = DateTime.Now;
+        var minArred = (agora.Minute / 15 + 1) * 15;
+        var horaInicio = minArred >= 60
+            ? new TimeOnly(Math.Min(agora.Hour + 1, 23), 0)
+            : new TimeOnly(agora.Hour, minArred);
+
+        _form = new FormEvento
+        {
+            DataInicio = DateOnly.FromDateTime(_diaSelecionado),
+            HoraInicio = horaInicio,
+            DataFim = DateOnly.FromDateTime(_diaSelecionado),
+            HoraFim = horaInicio.AddHours(1),
+            CalendarioId = cal?.Id ?? Guid.Empty
+        };
+        _mostrarModalEvento = true;
+    }
+
+    private void FecharModalEvento() => _mostrarModalEvento = false;
+
+    private void CriarEvento()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Titulo)) return;
+
+        DateTime inicio, fim;
+        if (_form.DiaInteiro)
+        {
+            inicio = _form.DataInicio.ToDateTime(TimeOnly.MinValue);
+            fim = _form.DataFim.ToDateTime(TimeOnly.MinValue);
+        }
+        else
+        {
+            inicio = _form.DataInicio.ToDateTime(_form.HoraInicio);
+            fim = _form.DataFim.ToDateTime(_form.HoraFim);
+        }
+
+        if (fim <= inicio) fim = inicio.AddHours(1);
+
+        CalendarioService.AdicionarEvento(new Evento
+        {
+            Titulo = _form.Titulo.Trim(),
+            Inicio = inicio,
+            Fim = fim,
+            DiaInteiro = _form.DiaInteiro,
+            CalendarioId = _form.CalendarioId,
+            CriadoEm = DateTime.Now
+        });
+
+        _mostrarModalEvento = false;
+        CarregarEventos();
+    }
+
+    private void AbrirDetalhesEvento(Evento evt) => _eventoDetalhe = evt;
+
+    private void ExcluirEvento()
+    {
+        if (_eventoDetalhe == null) return;
+        CalendarioService.ExcluirEvento(_eventoDetalhe);
+        _eventoDetalhe = null;
+        CarregarEventos();
+    }
+
+    public void Dispose()
+    {
+        _timer?.Stop();
+        _timer?.Dispose();
+    }
+}

@@ -123,6 +123,7 @@ window.evenoteEditor = {
     },
 
     // Restaura a seleção salva e aplica a cor
+
     applyColor: function (command, color) {
         try {
             if (this._selecaoSalva) {
@@ -140,6 +141,14 @@ window.evenoteEditor = {
             console.warn('evenoteEditor.applyColor:', e);
         } finally {
             this._selecaoSalva = null;
+        }
+    }
+};
+
+window.evenoteCalendario = {
+    scrollTo: function (element, top) {
+        if (element) {
+            element.scrollTop = top;
         }
     }
 };

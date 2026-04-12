@@ -10,6 +10,8 @@ public class AppDbContext : DbContext
     public DbSet<Caderno> Cadernos => Set<Caderno>();
     public DbSet<Nota> Notas => Set<Nota>();
     public DbSet<Tarefa> Tarefas => Set<Tarefa>();
+    public DbSet<CalendarioLocal> Calendarios => Set<CalendarioLocal>();
+    public DbSet<Evento> Eventos => Set<Evento>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
