@@ -9,6 +9,7 @@ public class AppDbContext : DbContext
 
     public DbSet<Caderno> Cadernos => Set<Caderno>();
     public DbSet<Nota> Notas => Set<Nota>();
+    public DbSet<Tarefa> Tarefas => Set<Tarefa>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

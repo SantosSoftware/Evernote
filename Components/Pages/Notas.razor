@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components
 @inject IJSRuntime JS
 @inject NotaService NotaService
+@inject NavigationManager Nav
 @implements IAsyncDisposable
 
 <PageTitle>Notas</PageTitle>
@@ -328,6 +329,7 @@
     private bool _inicializado = false;
     private bool _inicializadoParametros = false;
     private Guid? _cadernoIdAnterior;
+    private IDisposable? _locationChangingReg;
     private bool _mostrarInserir = false;
     private bool _mostrarMenuAcoes = false;
     private bool _mostrarModalMover = false;
@@ -359,6 +361,16 @@
     };
 
     // ── Lifecycle ────────────────────────────────────────────────────────────────
+
+    protected override void OnInitialized()
+    {
+        // Intercepta qualquer navegação antes que ela ocorra,
+        // garantindo que o conteúdo seja salvo enquanto o DOM ainda está intacto.
+        _locationChangingReg = Nav.RegisterLocationChangingHandler(async ctx =>
+        {
+            await SalvarConteudoAtual();
+        });
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -576,6 +588,7 @@
 
     public async ValueTask DisposeAsync()
     {
+        _locationChangingReg?.Dispose();
         await SalvarConteudoAtual();
     }
 

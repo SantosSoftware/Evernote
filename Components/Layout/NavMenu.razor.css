@@ -80,20 +80,18 @@
 
 /* ── Cadernos expansível ────────────────────────────────────────────────────── */
 
-.nav-cadernos-header {
-    display: flex;
-    align-items: center;
+/* NavLink ocupa a linha inteira — hover/active funcionam normalmente */
+.nav-item-cadernos {
+    position: relative;
 }
 
-.nav-cadernos-header ::deep .nav-link {
-    flex: 1;
-    min-width: 0;
-}
-
+/* Chevron posicionado sobre o canto direito do NavLink */
 .btn-chevron-cadernos {
-    flex-shrink: 0;
-    width: 1.8rem;
+    position: absolute;
+    top: 0;
+    right: 0;
     height: 2.6rem;
+    width: 2rem;
     background: none;
     border: none;
     cursor: pointer;
@@ -101,13 +99,11 @@
     align-items: center;
     justify-content: center;
     color: #5a5a5a;
-    border-radius: 6px;
     padding: 0;
-    transition: background-color 0.15s ease;
+    z-index: 1;
 }
 
 .btn-chevron-cadernos:hover {
-    background-color: #f0f0f0;
     color: #1a1a1a;
 }
 
@@ -115,6 +111,7 @@
     width: 0.9rem;
     height: 0.9rem;
     transition: transform 0.2s ease;
+    pointer-events: none;
 }
 
 .btn-chevron-cadernos.expandido svg {
@@ -128,13 +125,11 @@
 .nav-caderno-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding: 0 0.75rem 0 2.6rem;
     height: 2.1rem;
     color: #3d3d3d;
     text-decoration: none;
     font-size: 0.88rem;
-    font-weight: 400;
     border-radius: 6px;
     margin-bottom: 1px;
     transition: background-color 0.15s ease;
@@ -145,39 +140,30 @@
     color: #1a1a1a;
 }
 
+.nav-caderno-contagem {
+    margin-left: 8px;
+    flex-shrink: 0;
+}
 .nav-caderno-nome {
-    flex: 1;
-    min-width: 0;
+    flex-grow: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.nav-caderno-contagem {
-    font-size: 0.78rem;
-    color: #aaa;
-    margin-left: 0.4rem;
-    flex-shrink: 0;
+.nav-caderno-item {
+    display: flex;
+    min-width: 0;
 }
+
+.nav-caderno-nome {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
+}
+
 
 /* ── Fim cadernos expansível ─────────────────────────────────────────────── */
 
-.nav-scrollable {
-    display: none;
-}
-
-.navbar-toggler:checked ~ .nav-scrollable {
-    display: block;
-}
-
-@media (min-width: 641px) {
-    .navbar-toggler {
-        display: none;
-    }
-
-    .nav-scrollable {
-        display: block;
-        height: calc(100vh - 3.5rem);
-        overflow-y: auto;
-    }
-}
