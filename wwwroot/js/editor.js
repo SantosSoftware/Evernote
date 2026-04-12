@@ -1,5 +1,9 @@
 window.evenoteEditor = {
     _selecaoSalva: null,
+    _editor: null,
+    _dotNetRef: null,
+    _debounceTimer: null,
+    _noteId: null,
 
     setContent: function (element, content) {
         if (element) element.innerHTML = content || '';
@@ -13,16 +17,40 @@ window.evenoteEditor = {
         document.execCommand(command, false, value || null);
     },
 
+    clearDebounce: function () {
+        clearTimeout(this._debounceTimer);
+        this._debounceTimer = null;
+    },
+
+    // Atualiza qual nota está sendo editada.
+    // Chamado pelo C# sempre que a nota selecionada muda.
+    setNoteId: function (noteId) {
+        this._noteId = noteId;
+    },
+
+    // Lê e limpa o conteúdo pendente salvo no sessionStorage.
+    getPendingContent: function () {
+        try {
+            var id = sessionStorage.getItem('evenote_pending_id');
+            var content = sessionStorage.getItem('evenote_pending_content');
+            sessionStorage.removeItem('evenote_pending_id');
+            sessionStorage.removeItem('evenote_pending_content');
+            if (id && content !== null) return { id: id, content: content };
+        } catch (e) { }
+        return null;
+    },
+
     // Inicializa o editor e a toolbar.
     // Chamado uma única vez via OnAfterRenderAsync.
-    init: function (editor, toolbar) {
+    init: function (editor, toolbar, dotNetRef) {
         if (!editor || editor._evenoteInit) return;
         editor._evenoteInit = true;
 
+        this._editor = editor;
+        this._dotNetRef = dotNetRef;
+
         const self = this;
 
-        // Salva a seleção toda vez que o usuário para de interagir com o editor.
-        // Isso garante que sempre teremos a última seleção disponível.
         function salvarSelecao() {
             const sel = window.getSelection();
             if (sel && sel.rangeCount > 0) {
@@ -36,12 +64,45 @@ window.evenoteEditor = {
         editor.addEventListener('mouseup', salvarSelecao);
         editor.addEventListener('keyup', salvarSelecao);
 
-        // No mousedown da toolbar:
-        // 1. Salva a seleção ANTES de qualquer coisa (síncrono, no browser)
-        // 2. Chama preventDefault() para impedir que o editor perca o foco
         toolbar.addEventListener('mousedown', function (e) {
             salvarSelecao();
             e.preventDefault();
+        });
+
+        // Quando o editor perde o foco (clicar na sidebar, mudar de aba, etc.):
+        // 1. Grava no sessionStorage de forma SÍNCRONA — funciona mesmo durante navegação,
+        //    porque não depende de SignalR ou round-trip ao servidor.
+        // 2. Também tenta enviar ao servidor via DotNetObjectReference (se estiver disponível).
+        editor.addEventListener('blur', function () {
+            clearTimeout(self._debounceTimer);
+            self._debounceTimer = null;
+            if (self._noteId) {
+                try {
+                    sessionStorage.setItem('evenote_pending_id', self._noteId);
+                    sessionStorage.setItem('evenote_pending_content', editor.innerHTML);
+                } catch (e) { }
+            }
+            if (self._dotNetRef) {
+                self._dotNetRef.invokeMethodAsync('ConteudoAlterado', editor.innerHTML)
+                    .catch(function () { });
+            }
+        });
+
+        // Debounce de 300ms enquanto o usuário digita — envia ao servidor e atualiza sessionStorage.
+        editor.addEventListener('input', function () {
+            clearTimeout(self._debounceTimer);
+            self._debounceTimer = setTimeout(function () {
+                if (self._noteId) {
+                    try {
+                        sessionStorage.setItem('evenote_pending_id', self._noteId);
+                        sessionStorage.setItem('evenote_pending_content', editor.innerHTML);
+                    } catch (e) { }
+                }
+                if (self._dotNetRef) {
+                    self._dotNetRef.invokeMethodAsync('ConteudoAlterado', editor.innerHTML)
+                        .catch(function () { });
+                }
+            }, 300);
         });
     },
 

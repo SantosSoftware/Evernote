@@ -4,11 +4,12 @@
 @inject IJSRuntime JS
 @inject NotaService NotaService
 @inject NavigationManager Nav
+@inject IWebHostEnvironment Env
 @implements IAsyncDisposable
 
 <PageTitle>Notas</PageTitle>
 
-<div class="notas-layout">
+<div class="notas-layout" @onclick="FecharMenus">
 
     <!-- Painel esquerdo: lista de notas -->
     <div class="notas-lista-painel">
@@ -49,7 +50,7 @@
 
                 <!-- Botão Inserir -->
                 <div class="color-picker-wrapper">
-                    <button class="btn-inserir" @onclick="ToggleInserir" title="Inserir">
+                    <button class="btn-inserir" @onclick="ToggleInserir" @onclick:stopPropagation="true" title="Inserir">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="12" r="12" />
                             <line x1="12" y1="7" x2="12" y2="17" stroke="white" stroke-width="2" stroke-linecap="round" />
@@ -64,14 +65,22 @@
 
                     @if (_mostrarInserir)
                     {
-                        <div class="menu-inserir-dropdown">
-                            <div class="menu-inserir-grupo-titulo">Essenciais</div>
-
-                            <button class="menu-inserir-item" @onclick="InserirDivisor">
-                                <span class="menu-inserir-icone">—</span>
+                        <div class="menu-inserir-dropdown" @onclick:stopPropagation="true">
+                            <label class="menu-inserir-item" @onclick="InserirDivisor">
+                                <svg class="menu-inserir-icone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <line x1="3" y1="12" x2="21" y2="12"/>
+                                </svg>
                                 <span class="menu-inserir-nome">Divisor</span>
-                                <span class="menu-inserir-atalho">---</span>
-                            </button>
+                            </label>
+
+                            <label class="menu-inserir-item">
+                                <svg class="menu-inserir-icone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                                <span class="menu-inserir-nome">PDF</span>
+                                <InputFile accept=".pdf" OnChange="UploadPdfDoMenu" style="display:none" />
+                            </label>
                         </div>
                     }
                 </div>
@@ -175,12 +184,13 @@
                 <div class="color-picker-wrapper menu-acoes-wrapper">
                     <button class="toolbar-color-btn btn-menu-acoes"
                             title="Mais opções"
-                            @onclick="ToggleMenuAcoes">
+                            @onclick="ToggleMenuAcoes"
+                            @onclick:stopPropagation="true">
                         <span class="menu-acoes-pontos">•••</span>
                     </button>
                     @if (_mostrarMenuAcoes)
                     {
-                        <div class="menu-acoes-dropdown">
+                        <div class="menu-acoes-dropdown" @onclick:stopPropagation="true">
                             <button class="menu-acoes-item" @onclick="AbrirModalMover">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -215,6 +225,28 @@
                  @ref="editorRef"
                  @onfocusout="OnEditorFocusOut">
             </div>
+
+            <!-- Anexo PDF -->
+            @if (!string.IsNullOrEmpty(notaSelecionada.PdfPath))
+            {
+                <div class="pdf-secao">
+                    <div class="pdf-cabecalho">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <span>PDF anexado</span>
+                        <button class="pdf-remover" @onclick="RemoverPdf" title="Remover PDF">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <iframe class="pdf-viewer" src="@notaSelecionada.PdfPath"></iframe>
+                </div>
+            }
         }
         else
         {
@@ -330,6 +362,7 @@
     private bool _inicializadoParametros = false;
     private Guid? _cadernoIdAnterior;
     private IDisposable? _locationChangingReg;
+    private DotNetObjectReference<Notas>? _dotNetRef;
     private bool _mostrarInserir = false;
     private bool _mostrarMenuAcoes = false;
     private bool _mostrarModalMover = false;
@@ -364,8 +397,6 @@
 
     protected override void OnInitialized()
     {
-        // Intercepta qualquer navegação antes que ela ocorra,
-        // garantindo que o conteúdo seja salvo enquanto o DOM ainda está intacto.
         _locationChangingReg = Nav.RegisterLocationChangingHandler(async ctx =>
         {
             await SalvarConteudoAtual();
@@ -401,11 +432,15 @@
     {
         if (notaSelecionada != null)
         {
-            // Inicializa editor e toolbar uma única vez no JS (listeners de mouseup/keyup/mousedown)
+            // Inicializa editor e toolbar uma única vez no JS
             if (!_inicializado)
             {
                 _inicializado = true;
-                await JS.InvokeVoidAsync("evenoteEditor.init", editorRef, toolbarRef);
+                _dotNetRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("evenoteEditor.init", editorRef, toolbarRef, _dotNetRef);
+                // Ao inicializar, recupera qualquer conteúdo salvo no sessionStorage
+                // antes de uma navegação (o blur grava lá de forma síncrona no browser).
+                await RecuperarConteudoPendente();
             }
 
             // Carrega o conteúdo HTML no editor sempre que trocar de nota
@@ -413,15 +448,64 @@
             {
                 _idCarregado = notaSelecionada.Id;
                 await JS.InvokeVoidAsync("evenoteEditor.setContent", editorRef, notaSelecionada.Conteudo);
+                await JS.InvokeVoidAsync("evenoteEditor.setNoteId", notaSelecionada.Id.ToString());
             }
         }
     }
 
+    /// <summary>
+    /// Lê o sessionStorage para recuperar conteúdo que foi salvo pelo evento blur do JS
+    /// antes de uma navegação. Essa gravação é síncrona no browser e não depende de SignalR.
+    /// </summary>
+    private async Task RecuperarConteudoPendente()
+    {
+        try
+        {
+            var pending = await JS.InvokeAsync<PendingContent?>("evenoteEditor.getPendingContent");
+            if (pending == null || string.IsNullOrEmpty(pending.Id)) return;
+
+            var nota = _notasOrdenadas.FirstOrDefault(
+                n => n.Id.ToString() == pending.Id);
+            if (nota != null)
+            {
+                nota.Conteudo = pending.Content ?? "";
+                NotaService.SalvarAlteracoes();
+                // Se a nota com conteúdo pendente é a atual, força recarga no editor
+                if (notaSelecionada?.Id == nota.Id)
+                    _idCarregado = null;
+            }
+        }
+        catch { }
+    }
+
+    private class PendingContent
+    {
+        // Desserializado do objeto JS { id, content }
+        [System.Text.Json.Serialization.JsonPropertyName("id")]
+        public string Id { get; set; } = "";
+        [System.Text.Json.Serialization.JsonPropertyName("content")]
+        public string Content { get; set; } = "";
+    }
+
     // ── Ações ────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Chamado pelo JS (via DotNetObjectReference) sempre que o conteúdo do editor muda.
+    /// Mantém o modelo C# sincronizado com o DOM sem round-trip assíncrono no momento do save.
+    /// </summary>
+    [JSInvokable]
+    public void ConteudoAlterado(string conteudo)
+    {
+        if (notaSelecionada == null) return;
+        notaSelecionada.Conteudo = conteudo;
+        NotaService.SalvarAlteracoes();
+    }
 
     private async Task SelecionarNota(Nota nota)
     {
         if (notaSelecionada == nota) return;
+        // Cancela debounce pendente e faz um save explícito antes de trocar de nota
+        try { await JS.InvokeVoidAsync("evenoteEditor.clearDebounce"); } catch { }
         await SalvarConteudoAtual();
         notaSelecionada = nota;
         _idCarregado = null;
@@ -484,6 +568,12 @@
         NotaService.SalvarAlteracoes();
         _mostrarModalMover = false;
         _cadernoDestino = null;
+    }
+
+    private void FecharMenus()
+    {
+        _mostrarInserir    = false;
+        _mostrarMenuAcoes  = false;
     }
 
     private void ToggleInserir()
@@ -552,15 +642,18 @@
 
     private async Task SalvarConteudoAtual()
     {
-        if (notaSelecionada == null) return;
+        var nota = notaSelecionada;
+        if (nota == null) return;
+        // Tenta obter o conteúdo mais recente do DOM via JS interop.
+        // Se falhar (editor desmontado ou navegação em andamento), usa o que
+        // já está em nota.Conteudo — que foi mantido em sincronia pelo ConteudoAlterado.
         try
         {
             var conteudo = await JS.InvokeAsync<string>("evenoteEditor.getContent", editorRef);
-            notaSelecionada.Conteudo = conteudo;
-            // Não atualiza AtualizadoEm aqui para não reordenar a lista durante edição
-            NotaService.SalvarAlteracoes();
+            if (!string.IsNullOrEmpty(conteudo)) nota.Conteudo = conteudo;
         }
-        catch { /* editor pode não estar montado ainda */ }
+        catch { }
+        try { NotaService.SalvarAlteracoes(); } catch { }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -590,6 +683,51 @@
     {
         _locationChangingReg?.Dispose();
         await SalvarConteudoAtual();
+        _dotNetRef?.Dispose();
+    }
+
+    private async Task UploadPdfDoMenu(InputFileChangeEventArgs e)
+    {
+        _mostrarInserir = false;
+        await UploadPdf(e);
+    }
+
+    private async Task UploadPdf(InputFileChangeEventArgs e)
+    {
+        if (notaSelecionada == null) return;
+
+        var file = e.File;
+        if (!file.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)) return;
+
+        var uploadDir = Path.Combine(Env.WebRootPath, "uploads");
+        Directory.CreateDirectory(uploadDir);
+
+        // Remove PDF anterior se existir
+        if (!string.IsNullOrEmpty(notaSelecionada.PdfPath))
+        {
+            var anterior = Path.Combine(Env.WebRootPath, notaSelecionada.PdfPath.TrimStart('/'));
+            if (File.Exists(anterior)) File.Delete(anterior);
+        }
+
+        var fileName = $"{notaSelecionada.Id}_{Path.GetFileName(file.Name)}";
+        var filePath = Path.Combine(uploadDir, fileName);
+
+        await using var fs = new FileStream(filePath, FileMode.Create);
+        await file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024).CopyToAsync(fs);
+
+        notaSelecionada.PdfPath = $"/uploads/{fileName}";
+        NotaService.SalvarAlteracoes();
+    }
+
+    private void RemoverPdf()
+    {
+        if (notaSelecionada == null || string.IsNullOrEmpty(notaSelecionada.PdfPath)) return;
+
+        var filePath = Path.Combine(Env.WebRootPath, notaSelecionada.PdfPath.TrimStart('/'));
+        if (File.Exists(filePath)) File.Delete(filePath);
+
+        notaSelecionada.PdfPath = null;
+        NotaService.SalvarAlteracoes();
     }
 
 }

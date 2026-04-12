@@ -22,6 +22,7 @@ public class Nota
     public DateTime AtualizadoEm { get; set; } = DateTime.Now;
     public bool Excluida { get; set; } = false;
     public Guid CadernoId { get; set; }
+    public string? PdfPath { get; set; }
 }
 
 // ── Serviço ───────────────────────────────────────────────────────────────────
