@@ -27,7 +27,7 @@
 
         <div class="arq-busca">
             <input class="arq-busca-input" placeholder="Buscar arquivo..."
-                   @bind="_busca" @bind:event="oninput" @oninput="Filtrar" />
+                   value="@_busca" @oninput="OnBuscaInput" />
             <svg class="arq-busca-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -72,7 +72,9 @@
                 </button>
 
                 <div class="arq-breadcrumb">
-                    <span class="arq-breadcrumb-nota">@_selecionado.Nota.Titulo</span>
+                    <span class="arq-breadcrumb-nota" title="@_selecionado.Nota.Titulo">
+                        @_selecionado.Nota.Titulo
+                    </span>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="9 18 15 12 9 6"/>
@@ -88,7 +90,10 @@
             <div class="arq-preview-corpo">
                 @if (_selecionado.Extensao == ".pdf")
                 {
-                    <iframe class="arq-iframe" src="@_selecionado.Url" title="@_selecionado.NomeOriginal"></iframe>
+                    <iframe class="arq-iframe"
+                            src="@_selecionado.Url"
+                            title="@_selecionado.NomeOriginal">
+                    </iframe>
                 }
                 else if (_extensoesImagem.Contains(_selecionado.Extensao))
                 {
@@ -140,15 +145,20 @@
 
     protected override void OnInitialized()
     {
+        var uploadsDir = Path.Combine(
+            Env.WebRootPath ?? Path.Combine(Env.ContentRootPath, "wwwroot"),
+            "uploads");
+
         _todos = NotaService.NotasAtivas
             .Where(n => !string.IsNullOrEmpty(n.PdfPath))
             .Select(n =>
             {
-                var nomeOriginal = ExtrairNomeOriginal(n.PdfPath!);
-                var ext = Path.GetExtension(nomeOriginal).ToLower();
-                var caminho = Path.Combine(Env.WebRootPath, "uploads", n.PdfPath!);
+                var fileName = Path.GetFileName(n.PdfPath!); // extrai "guid_nome.pdf" de "/uploads/guid_nome.pdf"
+                var nomeOriginal = ExtrairNomeOriginal(fileName);
+                var ext = Path.GetExtension(fileName).ToLower();
+                var caminho = Path.Combine(uploadsDir, fileName);
                 var tamanho = File.Exists(caminho) ? new FileInfo(caminho).Length : 0L;
-                var url = "/uploads/" + Uri.EscapeDataString(n.PdfPath!);
+                var url = "/uploads/" + Uri.EscapeDataString(fileName);
                 return new ArquivoInfo(n, nomeOriginal, ext, tamanho, url);
             })
             .OrderByDescending(a => a.Nota.AtualizadoEm)
@@ -184,6 +194,12 @@
         _tamanhoTotal = _filtrados.Sum(a => a.Tamanho);
     }
 
+    private void OnBuscaInput(ChangeEventArgs e)
+    {
+        _busca = e.Value?.ToString() ?? "";
+        Filtrar();
+    }
+
     private void Selecionar(ArquivoInfo arq) =>
         _selecionado = _selecionado == arq ? null : arq;
 
@@ -193,10 +209,11 @@
         await JS.InvokeVoidAsync("evenoteArquivos.download", _selecionado.Url, _selecionado.NomeOriginal);
     }
 
-    private static string ExtrairNomeOriginal(string pdfPath)
+    private static string ExtrairNomeOriginal(string fileName)
     {
-        var idx = pdfPath.IndexOf('_');
-        return idx >= 0 && idx < pdfPath.Length - 1 ? pdfPath[(idx + 1)..] : pdfPath;
+        // fileName já é apenas o nome do arquivo (ex: "guid_nome.pdf"), sem o prefixo "/uploads/"
+        var idx = fileName.IndexOf('_');
+        return idx >= 0 && idx < fileName.Length - 1 ? fileName[(idx + 1)..] : fileName;
     }
 
     private static string FormatSize(long bytes) => bytes switch

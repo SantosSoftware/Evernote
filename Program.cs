@@ -50,8 +50,27 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseAntiforgery();
+
+// Endpoint dedicado para servir arquivos de upload
+app.MapGet("/uploads/{*filename}", (string filename, IWebHostEnvironment env) =>
+{
+    var webRoot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
+    var filePath = Path.Combine(webRoot, "uploads", Uri.UnescapeDataString(filename));
+    if (!File.Exists(filePath)) return Results.NotFound();
+    var contentType = Path.GetExtension(filePath).ToLower() switch
+    {
+        ".pdf"              => "application/pdf",
+        ".jpg" or ".jpeg"   => "image/jpeg",
+        ".png"              => "image/png",
+        ".gif"              => "image/gif",
+        ".webp"             => "image/webp",
+        _                   => "application/octet-stream"
+    };
+    return Results.File(filePath, contentType, enableRangeProcessing: true);
+});
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
