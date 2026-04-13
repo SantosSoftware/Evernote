@@ -145,6 +145,15 @@ window.evenoteEditor = {
     }
 };
 
+window.evenoteHome = {
+    loadRascunho: function () {
+        try { return localStorage.getItem('evenote_rascunho') || ''; } catch (e) { return ''; }
+    },
+    saveRascunho: function (text) {
+        try { localStorage.setItem('evenote_rascunho', text); } catch (e) { }
+    }
+};
+
 window.evenoteCalendario = {
     scrollTo: function (element, top) {
         if (element) {

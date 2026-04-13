@@ -1,7 +1,140 @@
-﻿@page "/"
+@page "/"
+@rendermode InteractiveServer
+@using System.Globalization
+@inject TarefaService TarefaService
+@inject CalendarioService CalendarioService
+@inject IJSRuntime JS
+@inject NavigationManager Nav
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Início</PageTitle>
 
-<h1>Início!</h1>
+<div class="home-layout">
 
-Aqui você poderá inserir os seus widgets!
+    <h1 class="home-titulo">Início</h1>
+
+    <div class="home-widgets">
+
+        <!-- ── Widget: Bloco de anotações ─────────────────────────────────── -->
+        <div class="widget widget-rascunho">
+            <div class="widget-header">
+                <span class="widget-titulo">Bloco de anotações</span>
+            </div>
+            <textarea class="rascunho-area"
+                      placeholder="Comece a escrever..."
+                      value="@_rascunho"
+                      @oninput="OnRascunhoInput"></textarea>
+        </div>
+
+        <!-- ── Widget: Minhas tarefas ─────────────────────────────────────── -->
+        <div class="widget widget-tarefas" @onclick='() => Nav.NavigateTo("/tarefas")'>
+            <div class="widget-header">
+                <span class="widget-titulo">Minhas tarefas</span>
+                @if (_tarefas.Count > 5)
+                {
+                    <span class="widget-contagem">@_tarefas.Count</span>
+                }
+            </div>
+            <div class="widget-tarefas-lista">
+                @if (!_tarefas.Any())
+                {
+                    <div class="widget-vazio">Nenhuma tarefa pendente</div>
+                }
+                @foreach (var t in _tarefas.Take(6))
+                {
+                    <div class="widget-tarefa-item">
+                        <div class="widget-tarefa-circulo"></div>
+                        <div class="widget-tarefa-info">
+                            <span class="widget-tarefa-titulo">
+                                @t.Titulo
+                                @if (t.Prioridade == Prioridade.Alta)
+                                {
+                                    <span class="widget-tarefa-icon">‼</span>
+                                }
+                                @if (t.Sinalizada)
+                                {
+                                    <span class="widget-tarefa-icon flag">🚩</span>
+                                }
+                            </span>
+                            @if (t.DataVencimento.HasValue)
+                            {
+                                var prazo = t.DataVencimento.Value.Date;
+                                var label = prazo == DateTime.Today ? "Hoje"
+                                    : prazo == DateTime.Today.AddDays(1) ? "Amanhã"
+                                    : prazo < DateTime.Today ? "Atrasada"
+                                    : "Prazo " + prazo.ToString("dddd", _ptBR);
+                                var atrasada = prazo < DateTime.Today;
+                                <span class="widget-tarefa-prazo @(atrasada ? "atrasada" : "")">@label</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- ── Widget: Calendário ─────────────────────────────────────────── -->
+        <div class="widget widget-calendario" @onclick='() => Nav.NavigateTo("/calendario")'>
+            <div class="widget-header">
+                <span class="widget-titulo">Calendário</span>
+            </div>
+            <div class="widget-cal-eventos">
+                @if (!_eventos.Any())
+                {
+                    <div class="widget-vazio">Nenhum evento nos próximos dias</div>
+                }
+                @foreach (var evt in _eventos)
+                {
+                    var cal = CalendarioService.ObterCalendario(evt.CalendarioId);
+                    var cor = cal?.Cor ?? "#4285f4";
+                    var ehHoje = evt.Inicio.Date == DateTime.Today;
+                    var dataLabel = ehHoje ? "Hoje"
+                        : evt.Inicio.Date == DateTime.Today.AddDays(1) ? "Amanhã"
+                        : evt.Inicio.ToString("ddd, d 'de' MMM", _ptBR);
+                    <div class="widget-cal-evento" style="border-left-color: @cor">
+                        <div class="widget-cal-evento-header">
+                            <span class="widget-cal-evento-data @(ehHoje ? "hoje" : "")">@dataLabel</span>
+                            <span class="widget-cal-evento-hora" style="color: @cor">
+                                @(evt.DiaInteiro ? "Dia inteiro" : FormatHora(evt.Inicio) + " – " + FormatHora(evt.Fim))
+                            </span>
+                        </div>
+                        <span class="widget-cal-evento-titulo">@evt.Titulo</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private static readonly CultureInfo _ptBR = new("pt-BR");
+
+    private string _rascunho = "";
+    private List<Tarefa> _tarefas = new();
+    private List<Evento> _eventos = new();
+
+    protected override void OnInitialized()
+    {
+        _tarefas = TarefaService.TarefasAtivas;
+        _eventos = CalendarioService.EventosDoPeriodo(DateTime.Today, DateTime.Today.AddDays(365))
+            .Take(5)
+            .ToList();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _rascunho = await JS.InvokeAsync<string>("evenoteHome.loadRascunho");
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnRascunhoInput(ChangeEventArgs e)
+    {
+        _rascunho = e.Value?.ToString() ?? "";
+        await JS.InvokeVoidAsync("evenoteHome.saveRascunho", _rascunho);
+    }
+
+    private static string FormatHora(DateTime dt) =>
+        dt.ToString("h:mm tt", CultureInfo.InvariantCulture);
+}

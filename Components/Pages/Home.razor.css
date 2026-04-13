@@ -1,0 +1,244 @@
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+
+.home-layout {
+    padding: 32px 40px;
+    max-width: 1400px;
+}
+
+.home-titulo {
+    font-size: 22px;
+    font-weight: 600;
+    color: #222;
+    margin: 0 0 24px 0;
+}
+
+.home-widgets {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+/* ── Widget base ──────────────────────────────────────────────────────────── */
+
+.widget {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+}
+
+.widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px 12px;
+}
+
+.widget-titulo {
+    font-size: 15px;
+    font-weight: 600;
+    color: #222;
+}
+
+.widget-contagem {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    background: #1a73e8;
+    border-radius: 10px;
+    padding: 2px 7px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.widget-vazio {
+    font-size: 13px;
+    color: #bbb;
+    padding: 24px 0;
+    text-align: center;
+}
+
+/* ── Widget: Rascunho ─────────────────────────────────────────────────────── */
+
+.widget-rascunho {
+    background: #fefde8;
+    border-color: #f0ebb8;
+}
+
+.widget-rascunho .widget-header {
+    padding-bottom: 4px;
+}
+
+.rascunho-area {
+    flex: 1;
+    width: 100%;
+    min-height: 220px;
+    border: none;
+    background: transparent;
+    resize: none;
+    outline: none;
+    font-size: 14px;
+    color: #444;
+    line-height: 1.6;
+    padding: 4px 18px 18px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.rascunho-area::placeholder {
+    color: #c8c090;
+}
+
+/* ── Widget: Tarefas ──────────────────────────────────────────────────────── */
+
+.widget-tarefas {
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+}
+
+.widget-tarefas:hover {
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+}
+
+.widget-tarefas-lista {
+    padding: 0 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.widget-tarefa-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 6px;
+    border-radius: 7px;
+    transition: background 0.1s;
+}
+
+.widget-tarefa-item:hover {
+    background: #f5f5f5;
+}
+
+.widget-tarefa-circulo {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid #bbb;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.widget-tarefa-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.widget-tarefa-titulo {
+    font-size: 13px;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.widget-tarefa-icon {
+    font-size: 12px;
+    color: #e65100;
+}
+
+.widget-tarefa-icon.flag {
+    color: inherit;
+}
+
+.widget-tarefa-prazo {
+    font-size: 11px;
+    color: #888;
+}
+
+.widget-tarefa-prazo.atrasada {
+    color: #d93025;
+    font-weight: 500;
+}
+
+/* ── Widget: Calendário ───────────────────────────────────────────────────── */
+
+.widget-calendario {
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+}
+
+.widget-calendario:hover {
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+}
+
+.widget-cal-eventos {
+    flex: 1;
+    padding: 0 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.widget-cal-evento {
+    border-left: 3px solid;
+    border-radius: 5px;
+    background: #f8f9fa;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: background 0.1s;
+}
+
+.widget-cal-evento:hover {
+    background: #f0f1f2;
+}
+
+.widget-cal-evento-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.widget-cal-evento-data {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: capitalize;
+}
+
+.widget-cal-evento-data.hoje {
+    color: #1a73e8;
+}
+
+.widget-cal-evento-titulo {
+    font-size: 13px;
+    font-weight: 500;
+    color: #222;
+}
+
+.widget-cal-evento-hora {
+    font-size: 11px;
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
+/* ── Responsivo ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+    .home-widgets {
+        grid-template-columns: 1fr;
+    }
+}
