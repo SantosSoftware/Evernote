@@ -1,0 +1,387 @@
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+
+.arquivos-layout {
+    display: flex;
+    height: calc(100vh - 48px);
+    overflow: hidden;
+    background: #fff;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+
+.arq-sidebar {
+    width: 360px;
+    min-width: 360px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #e8e8e8;
+    background: #f9f9f9;
+    overflow: hidden;
+}
+
+.arq-sidebar-header {
+    padding: 18px 18px 10px;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+}
+
+.arq-titulo-linha {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.arq-titulo {
+    font-size: 18px;
+    font-weight: 700;
+    color: #222;
+}
+
+.arq-contagem {
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+}
+
+.arq-tamanho-total {
+    font-size: 12px;
+    color: #aaa;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+
+.arq-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 10px 14px 0;
+    flex-shrink: 0;
+    border-bottom: 1px solid #eee;
+}
+
+.arq-tab {
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: #666;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 6px 6px 0 0;
+    border-bottom: 2px solid transparent;
+    transition: color 0.12s, border-color 0.12s;
+    margin-bottom: -1px;
+}
+
+.arq-tab:hover {
+    color: #222;
+    background: #f0f0f0;
+}
+
+.arq-tab.ativa {
+    color: #1a73e8;
+    border-bottom-color: #1a73e8;
+    font-weight: 500;
+    background: transparent;
+}
+
+/* ── Busca ────────────────────────────────────────────────────────────────── */
+
+.arq-busca {
+    position: relative;
+    padding: 10px 14px;
+    flex-shrink: 0;
+}
+
+.arq-busca-input {
+    width: 100%;
+    padding: 7px 32px 7px 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #333;
+    background: #fff;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.arq-busca-input:focus {
+    border-color: #1a73e8;
+}
+
+.arq-busca-input::placeholder {
+    color: #bbb;
+}
+
+.arq-busca-icon {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
+    color: #aaa;
+    pointer-events: none;
+}
+
+/* ── Lista de arquivos ────────────────────────────────────────────────────── */
+
+.arq-lista {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 0;
+}
+
+.arq-lista-vazia {
+    text-align: center;
+    color: #bbb;
+    font-size: 13px;
+    padding: 40px 0;
+}
+
+.arq-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-left: 3px solid transparent;
+}
+
+.arq-item:hover {
+    background: #f0f0f0;
+}
+
+.arq-item.selecionado {
+    background: #e8f0fe;
+    border-left-color: #1a73e8;
+}
+
+/* Ícone de tipo de arquivo */
+
+.arq-item-icone {
+    width: 40px;
+    height: 48px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+}
+
+.icone-pdf     { background: #e53935; }
+.icone-word    { background: #1565c0; }
+.icone-excel   { background: #2e7d32; }
+.icone-ppt     { background: #e65100; }
+.icone-imagem  { background: #6a1b9a; }
+.icone-generico{ background: #546e7a; }
+
+.arq-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.arq-item-nome {
+    font-size: 13px;
+    font-weight: 500;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.arq-item.selecionado .arq-item-nome {
+    color: #1a73e8;
+}
+
+.arq-item-meta {
+    font-size: 11px;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Painel de prévia ─────────────────────────────────────────────────────── */
+
+.arq-preview {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+.arq-preview-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #fff;
+    border-bottom: 1px solid #e8e8e8;
+    flex-shrink: 0;
+}
+
+.arq-btn-download {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #dadce0;
+    background: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background 0.12s;
+}
+
+.arq-btn-download:hover {
+    background: #f5f5f5;
+}
+
+.arq-btn-download svg {
+    width: 16px;
+    height: 16px;
+}
+
+.arq-breadcrumb {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #555;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.arq-breadcrumb svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: #bbb;
+}
+
+.arq-breadcrumb-nota {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.arq-breadcrumb-arquivo {
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.arq-btn-abrir {
+    padding: 7px 18px;
+    background: #1a73e8;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+
+.arq-btn-abrir:hover {
+    background: #1765cc;
+}
+
+.arq-preview-corpo {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+}
+
+.arq-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.arq-preview-imagem {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow: auto;
+}
+
+.arq-preview-imagem img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.arq-preview-sem-suporte {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: #888;
+}
+
+.arq-icone-grande {
+    width: 80px;
+    height: 96px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.arq-preview-sem-suporte p {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+}
+
+/* ── Estado vazio ─────────────────────────────────────────────────────────── */
+
+.arq-preview-vazio {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: #ccc;
+    background: #f9f9f9;
+}
+
+.arq-preview-vazio svg {
+    width: 56px;
+    height: 56px;
+}
+
+.arq-preview-vazio span {
+    font-size: 14px;
+    color: #bbb;
+}

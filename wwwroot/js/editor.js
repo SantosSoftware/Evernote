@@ -145,6 +145,17 @@ window.evenoteEditor = {
     }
 };
 
+window.evenoteArquivos = {
+    download: function (url, filename) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+};
+
 window.evenoteHome = {
     loadRascunho: function () {
         try { return localStorage.getItem('evenote_rascunho') || ''; } catch (e) { return ''; }

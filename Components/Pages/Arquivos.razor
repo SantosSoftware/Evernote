@@ -1,7 +1,228 @@
 @page "/arquivos"
+@rendermode InteractiveServer
+@inject NotaService NotaService
+@inject IWebHostEnvironment Env
+@inject IJSRuntime JS
 
 <PageTitle>Arquivos</PageTitle>
 
-<h1>Arquivos</h1>
+<div class="arquivos-layout">
 
-<p>Seus arquivos aparecerão aqui.</p>
+    <!-- ── Sidebar ────────────────────────────────────────────────────────── -->
+    <div class="arq-sidebar">
+
+        <div class="arq-sidebar-header">
+            <div class="arq-titulo-linha">
+                <span class="arq-titulo">Arquivos</span>
+                <span class="arq-contagem">@_filtrados.Count</span>
+            </div>
+            <span class="arq-tamanho-total">Tamanho total: @FormatSize(_tamanhoTotal)</span>
+        </div>
+
+        <div class="arq-tabs">
+            <button class="arq-tab @(_aba == "todos" ? "ativa" : "")" @onclick='() => MudarAba("todos")'>Arquivos</button>
+            <button class="arq-tab @(_aba == "midia" ? "ativa" : "")" @onclick='() => MudarAba("midia")'>Mídia</button>
+            <button class="arq-tab @(_aba == "docs" ? "ativa" : "")" @onclick='() => MudarAba("docs")'>Documentos</button>
+        </div>
+
+        <div class="arq-busca">
+            <input class="arq-busca-input" placeholder="Buscar arquivo..."
+                   @bind="_busca" @bind:event="oninput" @oninput="Filtrar" />
+            <svg class="arq-busca-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+        </div>
+
+        <div class="arq-lista">
+            @if (!_filtrados.Any())
+            {
+                <div class="arq-lista-vazia">Nenhum arquivo encontrado</div>
+            }
+            @foreach (var arq in _filtrados)
+            {
+                var selecionado = _selecionado == arq;
+                <div class="arq-item @(selecionado ? "selecionado" : "")" @onclick="() => Selecionar(arq)">
+                    <div class="arq-item-icone @IconeClasse(arq.Extensao)">
+                        @IconeLabel(arq.Extensao)
+                    </div>
+                    <div class="arq-item-info">
+                        <span class="arq-item-nome" title="@arq.NomeOriginal">@arq.NomeOriginal</span>
+                        <span class="arq-item-meta">@arq.Nota.Titulo · @FormatSize(arq.Tamanho)</span>
+                    </div>
+                </div>
+            }
+        </div>
+
+    </div>
+
+    <!-- ── Painel de prévia ────────────────────────────────────────────────── -->
+    @if (_selecionado != null)
+    {
+        <div class="arq-preview">
+
+            <div class="arq-preview-topbar">
+                <button class="arq-btn-download" @onclick="Baixar" title="Baixar arquivo">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                </button>
+
+                <div class="arq-breadcrumb">
+                    <span class="arq-breadcrumb-nota">@_selecionado.Nota.Titulo</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                    <span class="arq-breadcrumb-arquivo">@_selecionado.NomeOriginal</span>
+                </div>
+
+                <a class="arq-btn-abrir" href="@_selecionado.Url" target="_blank">
+                    Abrir arquivo
+                </a>
+            </div>
+
+            <div class="arq-preview-corpo">
+                @if (_selecionado.Extensao == ".pdf")
+                {
+                    <iframe class="arq-iframe" src="@_selecionado.Url" title="@_selecionado.NomeOriginal"></iframe>
+                }
+                else if (_extensoesImagem.Contains(_selecionado.Extensao))
+                {
+                    <div class="arq-preview-imagem">
+                        <img src="@_selecionado.Url" alt="@_selecionado.NomeOriginal" />
+                    </div>
+                }
+                else
+                {
+                    <div class="arq-preview-sem-suporte">
+                        <div class="arq-icone-grande @IconeClasse(_selecionado.Extensao)">
+                            @IconeLabel(_selecionado.Extensao)
+                        </div>
+                        <p>@_selecionado.NomeOriginal</p>
+                        <a class="arq-btn-abrir" href="@_selecionado.Url" target="_blank">Abrir arquivo</a>
+                    </div>
+                }
+            </div>
+
+        </div>
+    }
+    else
+    {
+        <div class="arq-preview-vazio">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+            <span>Selecione um arquivo para visualizar</span>
+        </div>
+    }
+
+</div>
+
+@code {
+    private record ArquivoInfo(Nota Nota, string NomeOriginal, string Extensao, long Tamanho, string Url);
+
+    private static readonly HashSet<string> _extensoesImagem =
+        new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg" };
+    private static readonly HashSet<string> _extensoesDocs =
+        new(StringComparer.OrdinalIgnoreCase) { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".csv" };
+
+    private List<ArquivoInfo> _todos = new();
+    private List<ArquivoInfo> _filtrados = new();
+    private ArquivoInfo? _selecionado;
+    private string _aba = "todos";
+    private string _busca = "";
+    private long _tamanhoTotal;
+
+    protected override void OnInitialized()
+    {
+        _todos = NotaService.NotasAtivas
+            .Where(n => !string.IsNullOrEmpty(n.PdfPath))
+            .Select(n =>
+            {
+                var nomeOriginal = ExtrairNomeOriginal(n.PdfPath!);
+                var ext = Path.GetExtension(nomeOriginal).ToLower();
+                var caminho = Path.Combine(Env.WebRootPath, "uploads", n.PdfPath!);
+                var tamanho = File.Exists(caminho) ? new FileInfo(caminho).Length : 0L;
+                var url = "/uploads/" + Uri.EscapeDataString(n.PdfPath!);
+                return new ArquivoInfo(n, nomeOriginal, ext, tamanho, url);
+            })
+            .OrderByDescending(a => a.Nota.AtualizadoEm)
+            .ToList();
+
+        Filtrar();
+    }
+
+    private void MudarAba(string aba)
+    {
+        _aba = aba;
+        _selecionado = null;
+        Filtrar();
+    }
+
+    private void Filtrar()
+    {
+        var q = _todos.AsEnumerable();
+
+        q = _aba switch
+        {
+            "midia" => q.Where(a => _extensoesImagem.Contains(a.Extensao)),
+            "docs"  => q.Where(a => _extensoesDocs.Contains(a.Extensao)),
+            _       => q
+        };
+
+        if (!string.IsNullOrWhiteSpace(_busca))
+            q = q.Where(a =>
+                a.NomeOriginal.Contains(_busca, StringComparison.OrdinalIgnoreCase) ||
+                a.Nota.Titulo.Contains(_busca, StringComparison.OrdinalIgnoreCase));
+
+        _filtrados = q.ToList();
+        _tamanhoTotal = _filtrados.Sum(a => a.Tamanho);
+    }
+
+    private void Selecionar(ArquivoInfo arq) =>
+        _selecionado = _selecionado == arq ? null : arq;
+
+    private async Task Baixar()
+    {
+        if (_selecionado == null) return;
+        await JS.InvokeVoidAsync("evenoteArquivos.download", _selecionado.Url, _selecionado.NomeOriginal);
+    }
+
+    private static string ExtrairNomeOriginal(string pdfPath)
+    {
+        var idx = pdfPath.IndexOf('_');
+        return idx >= 0 && idx < pdfPath.Length - 1 ? pdfPath[(idx + 1)..] : pdfPath;
+    }
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1024               => $"{bytes} B",
+        < 1024 * 1024        => $"{bytes / 1024} kb",
+        _                    => $"{bytes / (1024.0 * 1024):F1} MB"
+    };
+
+    private static string IconeClasse(string ext) => ext switch
+    {
+        ".pdf"                      => "icone-pdf",
+        ".doc" or ".docx"           => "icone-word",
+        ".xls" or ".xlsx"           => "icone-excel",
+        ".ppt" or ".pptx"           => "icone-ppt",
+        ".jpg" or ".jpeg" or ".png"
+            or ".gif" or ".webp"    => "icone-imagem",
+        _                           => "icone-generico"
+    };
+
+    private static string IconeLabel(string ext) => ext switch
+    {
+        ".pdf"            => "PDF",
+        ".doc" or ".docx" => "DOC",
+        ".xls" or ".xlsx" => "XLS",
+        ".ppt" or ".pptx" => "PPT",
+        _                 => ext.TrimStart('.').ToUpper() is { Length: > 0 } s ? s : "ARQ"
+    };
+}
