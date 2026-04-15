@@ -765,6 +765,18 @@
     cursor: default;
 }
 
+/* ── Upload erro ─────────────────────────────────────────────────────────── */
+
+.upload-erro {
+    margin: 0.75rem 1.5rem 0;
+    padding: 0.5rem 0.75rem;
+    background: #fff5f5;
+    border: 1px solid #feb2b2;
+    border-radius: 6px;
+    color: #c53030;
+    font-size: 0.85rem;
+}
+
 /* ── Anexo PDF ───────────────────────────────────────────────────────────── */
 
 .pdf-secao {
@@ -835,4 +847,316 @@
     height: 600px;
     border: 1px solid #e0e0e0;
     border-radius: 6px;
+}
+
+/* ── Botão de ordenação ──────────────────────────────────────────────────── */
+
+.btn-ordenacao {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #555;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: background 0.15s;
+}
+
+.btn-ordenacao:hover {
+    background: #e8e8e8;
+    color: #1a1a1a;
+}
+
+.btn-ordenacao svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.btn-ordenacao-ativo {
+    color: #2563eb;
+}
+
+.btn-ordenacao-ativo:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+/* ── Menu de ordenação ───────────────────────────────────────────────────── */
+
+.menu-ordenacao-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    padding: 4px;
+    min-width: 180px;
+    z-index: 100;
+}
+
+.menu-ordenacao-secao-titulo {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #aaa;
+    padding: 0.35rem 0.75rem 0.2rem;
+}
+
+.menu-ordenacao-separador {
+    height: 1px;
+    background: #e8e8e8;
+    margin: 4px 0;
+}
+
+.menu-ordenacao-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    color: #1a1a1a;
+    transition: background 0.12s;
+}
+
+.menu-ordenacao-item svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    color: #2563eb;
+}
+
+.menu-ordenacao-item:hover {
+    background: #f5f5f5;
+}
+
+.menu-ordenacao-item-ativo {
+    color: #2563eb;
+    font-weight: 600;
+}
+
+.menu-ordenacao-placeholder {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+/* ── Modal de gravação ───────────────────────────────────────────────────── */
+
+.modal-gravacao {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    min-width: 220px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.gravacao-cabecalho {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.gravacao-indicador {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #e53e3e;
+    flex-shrink: 0;
+    animation: pulsar 1.2s ease-in-out infinite;
+}
+
+@keyframes pulsar {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.85); }
+}
+
+.gravacao-status {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #e53e3e;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.gravacao-status-pausado {
+    color: #d69e2e;
+}
+
+.gravacao-cronometro {
+    margin-left: auto;
+    font-size: 1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+}
+
+.gravacao-erro {
+    font-size: 0.82rem;
+    color: #feb2b2;
+    background: rgba(229, 62, 62, 0.15);
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+}
+
+.gravacao-controles {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.gravacao-btn {
+    flex: 1;
+    border: none;
+    border-radius: 7px;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+
+.gravacao-btn-pausar {
+    background: #4a4a4a;
+    color: #fff;
+}
+
+.gravacao-btn-pausar:hover { background: #5a5a5a; }
+
+.gravacao-btn-retomar {
+    background: #2563eb;
+    color: #fff;
+}
+
+.gravacao-btn-retomar:hover { background: #1d4ed8; }
+
+.gravacao-btn-parar {
+    background: #e53e3e;
+    color: #fff;
+}
+
+.gravacao-btn-parar:hover { background: #c53030; }
+
+.gravacao-btn-fechar {
+    background: #4a4a4a;
+    color: #fff;
+}
+
+.gravacao-btn-fechar:hover { background: #5a5a5a; }
+
+/* ── Seção de gravações de tela ──────────────────────────────────────────── */
+
+.gravacoes-secao {
+    margin: 1rem 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.gravacoes-titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.gravacoes-titulo svg {
+    width: 1rem;
+    height: 1rem;
+    color: #e53e3e;
+}
+
+.gravacao-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: #f9f9f9;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+
+.gravacao-video {
+    width: 100%;
+    border-radius: 6px;
+    background: #000;
+    max-height: 360px;
+}
+
+.gravacao-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    color: #888;
+}
+
+.gravacao-acoes {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-baixar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.12s;
+}
+
+.btn-baixar:hover { background: #333; }
+
+.btn-baixar svg {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+.btn-excluir-gravacao {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    background: none;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #e53e3e;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+.btn-excluir-gravacao:hover {
+    background: #fff0f0;
+    border-color: #feb2b2;
+}
+
+.btn-excluir-gravacao svg {
+    width: 0.9rem;
+    height: 0.9rem;
 }

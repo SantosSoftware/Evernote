@@ -1,6 +1,7 @@
 @page "/lixeira"
 @rendermode InteractiveServer
 @inject NotaService NotaService
+@inject GravacaoTelaService GravacaoTelaService
 
 <PageTitle>Lixeira</PageTitle>
 
@@ -99,14 +100,18 @@
         notas.Remove(nota);
     }
 
-    private void ExcluirDefinitivamente(Nota nota)
+    private async Task ExcluirDefinitivamente(Nota nota)
     {
+        await GravacaoTelaService.ExcluirPorNotaAsync(nota.Id);
         NotaService.ExcluirDefinitivamente(nota);
         notas.Remove(nota);
     }
 
-    private void EsvaziarLixeira()
+    private async Task EsvaziarLixeira()
     {
+        foreach (var nota in notas)
+            await GravacaoTelaService.ExcluirPorNotaAsync(nota.Id);
+
         NotaService.EsvaziarLixeira();
         notas.Clear();
     }

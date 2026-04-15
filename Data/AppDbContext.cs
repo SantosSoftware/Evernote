@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Tarefa> Tarefas => Set<Tarefa>();
     public DbSet<CalendarioLocal> Calendarios => Set<CalendarioLocal>();
     public DbSet<Evento> Eventos => Set<Evento>();
+    public DbSet<GravacaoTela> GravacoesTela { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -20,5 +21,11 @@ public class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(n => n.CadernoId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<GravacaoTela>()
+            .HasOne<Nota>()
+            .WithMany()
+            .HasForeignKey(g => g.NotaId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

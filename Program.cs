@@ -7,7 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents()
+    .AddHubOptions(options => options.MaximumReceiveMessageSize = 100 * 1024 * 1024); // 100 MB
 
 // Banco de dados SQLite
 var dbPath = Path.Combine(builder.Environment.ContentRootPath, "evenote.db");
@@ -18,7 +19,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<NotaService>();
 builder.Services.AddScoped<TarefaService>();
 builder.Services.AddScoped<CalendarioService>();
+builder.Services.AddScoped<GravacaoTelaService>();
 builder.Services.AddHostedService<LembreteTarefaService>();
+
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
@@ -67,12 +71,14 @@ app.MapGet("/uploads/{*filename}", (string filename, IWebHostEnvironment env) =>
         ".png"              => "image/png",
         ".gif"              => "image/gif",
         ".webp"             => "image/webp",
+        ".webm"             => "video/webm",
         _                   => "application/octet-stream"
     };
     return Results.File(filePath, contentType, enableRangeProcessing: true);
 });
 
 app.MapStaticAssets();
+app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

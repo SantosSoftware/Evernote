@@ -1,8 +1,10 @@
 @page "/notas"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components
+@using Evenote.Controllers
 @inject IJSRuntime JS
 @inject NotaService NotaService
+@inject GravacaoTelaService GravacaoTelaService
 @inject NavigationManager Nav
 @inject IWebHostEnvironment Env
 @implements IAsyncDisposable
@@ -18,6 +20,92 @@
                 @(CadernoId.HasValue ? (NotaService.ObterCaderno(CadernoId.Value)?.Nome ?? "Notas") : "Notas")
                 <span class="lista-contagem">@_notasOrdenadas.Count</span>
             </span>
+            <div class="color-picker-wrapper">
+                <button class="btn-ordenacao @(OrdenacaoPersonalizada ? "btn-ordenacao-ativo" : "")"
+                        title="Ordenar notas"
+                        @onclick="ToggleMenuOrdenacao"
+                        @onclick:stopPropagation="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="15" y2="12" />
+                        <line x1="3" y1="18" x2="9" y2="18" />
+                        <polyline points="17 15 20 18 23 15" />
+                        <line x1="20" y1="6" x2="20" y2="18" />
+                    </svg>
+                </button>
+
+                @if (_mostrarMenuOrdenacao)
+                {
+                    <div class="menu-ordenacao-dropdown" @onclick:stopPropagation="true">
+                        <div class="menu-ordenacao-secao-titulo">Ordenar por</div>
+                        <button class="menu-ordenacao-item @(_criterioOrdenacao == CriterioOrdenacao.DataCriacao ? "menu-ordenacao-item-ativo" : "")"
+                                @onclick="() => SelecionarCriterio(CriterioOrdenacao.DataCriacao)">
+                            @if (_criterioOrdenacao == CriterioOrdenacao.DataCriacao)
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            }
+                            else
+                            {
+                                <span class="menu-ordenacao-placeholder"></span>
+                            }
+                            Data de criação
+                        </button>
+                        <button class="menu-ordenacao-item @(_criterioOrdenacao == CriterioOrdenacao.Titulo ? "menu-ordenacao-item-ativo" : "")"
+                                @onclick="() => SelecionarCriterio(CriterioOrdenacao.Titulo)">
+                            @if (_criterioOrdenacao == CriterioOrdenacao.Titulo)
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            }
+                            else
+                            {
+                                <span class="menu-ordenacao-placeholder"></span>
+                            }
+                            Título
+                        </button>
+
+                        <div class="menu-ordenacao-separador"></div>
+                        <div class="menu-ordenacao-secao-titulo">Direção</div>
+
+                        <button class="menu-ordenacao-item @(_direcaoOrdenacao == DirecaoOrdenacao.Crescente ? "menu-ordenacao-item-ativo" : "")"
+                                @onclick="() => SelecionarDirecao(DirecaoOrdenacao.Crescente)">
+                            @if (_direcaoOrdenacao == DirecaoOrdenacao.Crescente)
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            }
+                            else
+                            {
+                                <span class="menu-ordenacao-placeholder"></span>
+                            }
+                            Crescente
+                        </button>
+                        <button class="menu-ordenacao-item @(_direcaoOrdenacao == DirecaoOrdenacao.Decrescente ? "menu-ordenacao-item-ativo" : "")"
+                                @onclick="() => SelecionarDirecao(DirecaoOrdenacao.Decrescente)">
+                            @if (_direcaoOrdenacao == DirecaoOrdenacao.Decrescente)
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            }
+                            else
+                            {
+                                <span class="menu-ordenacao-placeholder"></span>
+                            }
+                            Decrescente
+                        </button>
+                    </div>
+                }
+            </div>
             <button class="btn-nova-nota" @onclick="NovaNota" title="Nova nota">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -81,6 +169,17 @@
                                 <span class="menu-inserir-nome">PDF</span>
                                 <InputFile accept=".pdf" OnChange="UploadPdfDoMenu" style="display:none" />
                             </label>
+
+                            @if (_suportaGravacao)
+                            {
+                                <label class="menu-inserir-item" @onclick="IniciarGravacao">
+                                    <svg class="menu-inserir-icone" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="8"/>
+                                        <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+                                    </svg>
+                                    <span class="menu-inserir-nome">Gravar tela</span>
+                                </label>
+                            }
                         </div>
                     }
                 </div>
@@ -226,6 +325,12 @@
                  @onfocusout="OnEditorFocusOut">
             </div>
 
+            <!-- Erro de upload -->
+            @if (_uploadErro != null)
+            {
+                <div class="upload-erro">@_uploadErro</div>
+            }
+
             <!-- Anexo PDF -->
             @if (!string.IsNullOrEmpty(notaSelecionada.PdfPath))
             {
@@ -245,6 +350,55 @@
                         </button>
                     </div>
                     <iframe class="pdf-viewer" src="@notaSelecionada.PdfPath"></iframe>
+                </div>
+            }
+
+            <!-- Gravações de tela -->
+            @if (_gravacoes.Count > 0)
+            {
+                <div class="gravacoes-secao">
+                    <div class="gravacoes-titulo">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="8"/>
+                            <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+                        </svg>
+                        <span>Gravações de tela</span>
+                    </div>
+                    @foreach (var gravacao in _gravacoes)
+                    {
+                        <div class="gravacao-item">
+                            <video class="gravacao-video" controls src="@gravacao.CaminhoArquivo"></video>
+                            <div class="gravacao-meta">
+                                <span class="gravacao-data">@gravacao.CriadoEm.ToString("dd/MM/yyyy HH:mm")</span>
+                                <span class="gravacao-tamanho">@GravacaoTelaService.FormatarTamanho(gravacao.TamanhoBytes)</span>
+                            </div>
+                            <div class="gravacao-acoes">
+                                <a class="btn-baixar"
+                                   href="@gravacao.CaminhoArquivo"
+                                   download="@gravacao.NomeOriginal">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <polyline points="7 10 12 15 17 10"/>
+                                        <line x1="12" y1="15" x2="12" y2="3"/>
+                                    </svg>
+                                    Baixar
+                                </a>
+                                <button class="btn-excluir-gravacao"
+                                        @onclick="() => ExcluirGravacao(gravacao.Id)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                        <path d="M10 11v6M14 11v6"/>
+                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                                    </svg>
+                                    Excluir
+                                </button>
+                            </div>
+                        </div>
+                    }
                 </div>
             }
         }
@@ -345,13 +499,56 @@
     </div>
 }
 
+<!-- Modal: Gravação de tela -->
+@if (_estadoGravacao != EstadoGravacao.Inativo || _erroGravacao != null)
+{
+    <div class="modal-gravacao">
+        <div class="gravacao-cabecalho">
+            @if (_estadoGravacao == EstadoGravacao.Gravando)
+            {
+                <span class="gravacao-indicador"></span>
+                <span class="gravacao-status">Gravando</span>
+            }
+            else if (_estadoGravacao == EstadoGravacao.Pausado)
+            {
+                <span class="gravacao-status gravacao-status-pausado">Pausado</span>
+            }
+            <span class="gravacao-cronometro">@GravacaoTelaService.FormatarCronometro(_segundosGravacao)</span>
+        </div>
+
+        @if (_erroGravacao != null)
+        {
+            <div class="gravacao-erro">@_erroGravacao</div>
+        }
+
+        <div class="gravacao-controles">
+            @if (_estadoGravacao == EstadoGravacao.Gravando)
+            {
+                <button class="gravacao-btn gravacao-btn-pausar" @onclick="PausarGravacao">Pausar</button>
+            }
+            else if (_estadoGravacao == EstadoGravacao.Pausado)
+            {
+                <button class="gravacao-btn gravacao-btn-retomar" @onclick="RetomarGravacao">Retomar</button>
+            }
+            @if (_estadoGravacao != EstadoGravacao.Inativo)
+            {
+                <button class="gravacao-btn gravacao-btn-parar" @onclick="PararGravacao">Parar</button>
+            }
+            @if (_erroGravacao != null)
+            {
+                <button class="gravacao-btn gravacao-btn-fechar" @onclick="() => _erroGravacao = null">Fechar</button>
+            }
+        </div>
+    </div>
+}
+
 @code {
-    // ── Parâmetros ───────────────────────────────────────────────────────────────
+    // -- Parâmetros ---------------------------------------------------------------
 
     [Parameter, SupplyParameterFromQuery(Name = "caderno")]
     public Guid? CadernoId { get; set; }
 
-    // ── Estado ──────────────────────────────────────────────────────────────────
+    // -- Estado ------------------------------------------------------------------
 
     private Nota? notaSelecionada;
     private List<Nota> _notasOrdenadas = new();
@@ -363,13 +560,30 @@
     private Guid? _cadernoIdAnterior;
     private IDisposable? _locationChangingReg;
     private DotNetObjectReference<Notas>? _dotNetRef;
+    private CriterioOrdenacao _criterioOrdenacao = CriterioOrdenacao.DataCriacao;
+    private DirecaoOrdenacao _direcaoOrdenacao = DirecaoOrdenacao.Decrescente;
+    private bool _mostrarMenuOrdenacao = false;
     private bool _mostrarInserir = false;
     private bool _mostrarMenuAcoes = false;
+
+    // -- Gravação de tela ---------------------------------------------------------
+    private List<GravacaoTela> _gravacoes = new();
+    private EstadoGravacao _estadoGravacao = EstadoGravacao.Inativo;
+    private int _segundosGravacao = 0;
+    private string? _erroGravacao = null;
+    private bool _suportaGravacao = false;
+
+    // -- Propriedades auxiliares --------------------------------------------------
+
+    private bool OrdenacaoPersonalizada =>
+        _criterioOrdenacao != CriterioOrdenacao.DataCriacao ||
+        _direcaoOrdenacao != DirecaoOrdenacao.Decrescente;
+    private string? _uploadErro = null;
     private bool _mostrarModalMover = false;
     private string _termoBuscaMover = "";
     private Caderno? _cadernoDestino = null;
 
-    // ── Color picker ─────────────────────────────────────────────────────────────
+    // -- Color picker -------------------------------------------------------------
 
     private bool _mostrarCorFonte = false;
     private bool _mostrarCorFundo = false;
@@ -393,7 +607,7 @@
         "#90cdf4", "#d6bcfa", "#fbb6ce", "#81e6d9"
     };
 
-    // ── Lifecycle ────────────────────────────────────────────────────────────────
+    // -- Lifecycle ----------------------------------------------------------------
 
     protected override void OnInitialized()
     {
@@ -417,8 +631,8 @@
             _notasOrdenadas = (CadernoId.HasValue
                 ? NotaService.NotasAtivas.Where(n => n.CadernoId == CadernoId.Value)
                 : NotaService.NotasAtivas)
-                .OrderByDescending(n => n.AtualizadoEm)
                 .ToList();
+            AplicarOrdenacao();
 
             if (notaSelecionada == null || !_notasOrdenadas.Contains(notaSelecionada))
             {
@@ -441,6 +655,7 @@
                 // Ao inicializar, recupera qualquer conteúdo salvo no sessionStorage
                 // antes de uma navegação (o blur grava lá de forma síncrona no browser).
                 await RecuperarConteudoPendente();
+                _suportaGravacao = await JS.InvokeAsync<bool>("screenRecorder.verificarSuporteAsync");
             }
 
             // Carrega o conteúdo HTML no editor sempre que trocar de nota
@@ -449,6 +664,7 @@
                 _idCarregado = notaSelecionada.Id;
                 await JS.InvokeVoidAsync("evenoteEditor.setContent", editorRef, notaSelecionada.Conteudo);
                 await JS.InvokeVoidAsync("evenoteEditor.setNoteId", notaSelecionada.Id.ToString());
+                _gravacoes = await GravacaoTelaService.ObterPorNotaAsync(notaSelecionada.Id);
             }
         }
     }
@@ -487,7 +703,7 @@
         public string Content { get; set; } = "";
     }
 
-    // ── Ações ────────────────────────────────────────────────────────────────────
+    // -- Ações --------------------------------------------------------------------
 
     /// <summary>
     /// Chamado pelo JS (via DotNetObjectReference) sempre que o conteúdo do editor muda.
@@ -499,6 +715,96 @@
         if (notaSelecionada == null) return;
         notaSelecionada.Conteudo = conteudo;
         NotaService.SalvarAlteracoes();
+    }
+
+    [JSInvokable]
+    public void GravacaoIniciada()
+    {
+        _estadoGravacao = EstadoGravacao.Gravando;
+        _erroGravacao = null;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void GravacaoPausada()
+    {
+        _estadoGravacao = EstadoGravacao.Pausado;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void GravacaoRetomada()
+    {
+        _estadoGravacao = EstadoGravacao.Gravando;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task GravacaoParada(GravacaoTelaDto dto)
+    {
+        var gravacao = new GravacaoTela
+        {
+            Id = dto.Id,
+            NotaId = dto.NotaId,
+            CaminhoArquivo = dto.CaminhoArquivo,
+            NomeOriginal = dto.NomeOriginal,
+            TamanhoBytes = dto.TamanhoBytes,
+            CriadoEm = dto.CriadoEm
+        };
+        _gravacoes.Add(gravacao);
+        _estadoGravacao = EstadoGravacao.Inativo;
+        _segundosGravacao = 0;
+        _erroGravacao = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task GravacaoErro(string mensagem)
+    {
+        _erroGravacao = mensagem;
+        _estadoGravacao = EstadoGravacao.Inativo;
+        _segundosGravacao = 0;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task TickCronometro(int segundos)
+    {
+        _segundosGravacao = segundos;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task IniciarGravacao()
+    {
+        _mostrarInserir = false;
+        _erroGravacao = null;
+        if (notaSelecionada == null) return;
+        await JS.InvokeVoidAsync("screenRecorder.iniciarAsync", _dotNetRef, notaSelecionada.Id.ToString());
+    }
+
+    private async Task PausarGravacao()
+    {
+        await JS.InvokeVoidAsync("screenRecorder.pausar");
+    }
+
+    private async Task RetomarGravacao()
+    {
+        await JS.InvokeVoidAsync("screenRecorder.retomar");
+    }
+
+    private async Task PararGravacao()
+    {
+        await JS.InvokeVoidAsync("screenRecorder.pararAsync");
+    }
+
+    private async Task ExcluirGravacao(Guid id)
+    {
+        var confirmado = await JS.InvokeAsync<bool>("confirm", "Excluir esta gravação de tela?");
+        if (!confirmado) return;
+
+        await GravacaoTelaService.ExcluirGravacaoAsync(id);
+        _gravacoes.RemoveAll(g => g.Id == id);
+        StateHasChanged();
     }
 
     private async Task SelecionarNota(Nota nota)
@@ -572,8 +878,9 @@
 
     private void FecharMenus()
     {
-        _mostrarInserir    = false;
-        _mostrarMenuAcoes  = false;
+        _mostrarInserir        = false;
+        _mostrarMenuAcoes      = false;
+        _mostrarMenuOrdenacao  = false;
     }
 
     private void ToggleInserir()
@@ -597,6 +904,29 @@
         _mostrarCorFonte = false;
         _mostrarCorFundo = false;
         _mostrarInserir = false;
+    }
+
+    private void ToggleMenuOrdenacao()
+    {
+        _mostrarMenuOrdenacao = !_mostrarMenuOrdenacao;
+        _mostrarInserir       = false;
+        _mostrarCorFonte      = false;
+        _mostrarCorFundo      = false;
+        _mostrarMenuAcoes     = false;
+    }
+
+    private void SelecionarCriterio(CriterioOrdenacao criterio)
+    {
+        _criterioOrdenacao    = criterio;
+        AplicarOrdenacao();
+        _mostrarMenuOrdenacao = false;
+    }
+
+    private void SelecionarDirecao(DirecaoOrdenacao direcao)
+    {
+        _direcaoOrdenacao     = direcao;
+        AplicarOrdenacao();
+        _mostrarMenuOrdenacao = false;
     }
 
     private async Task Formatar(string comando, string? valor = null)
@@ -656,7 +986,7 @@
         try { NotaService.SalvarAlteracoes(); } catch { }
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────────
+    // -- Helpers ------------------------------------------------------------------
 
     private static string ObterPreview(string html)
     {
@@ -674,7 +1004,7 @@
         if (diff.TotalHours < 24)
         {
             var h = (int)diff.TotalHours;
-            return $"{h} hora{(h > 1 ? "s" : "")} atrás";
+            return $"{h} hora{(h > 1 ? "s" : "")} atr�s";
         }
         return data.ToString("dd/MM/yyyy");
     }
@@ -686,10 +1016,34 @@
         _dotNetRef?.Dispose();
     }
 
+    // -- Ordenação ----------------------------------------------------------------
+
+    private void AplicarOrdenacao()
+    {
+        IEnumerable<Nota> query = _criterioOrdenacao switch
+        {
+            CriterioOrdenacao.Titulo =>
+                _direcaoOrdenacao == DirecaoOrdenacao.Crescente
+                    ? _notasOrdenadas.OrderBy(n => n.Titulo,
+                          StringComparer.CurrentCultureIgnoreCase)
+                    : _notasOrdenadas.OrderByDescending(n => n.Titulo,
+                          StringComparer.CurrentCultureIgnoreCase),
+
+            _ => // DataCriacao (default)
+                _direcaoOrdenacao == DirecaoOrdenacao.Crescente
+                    ? _notasOrdenadas.OrderBy(n => n.CriadoEm ?? n.AtualizadoEm)
+                    : _notasOrdenadas.OrderByDescending(n => n.CriadoEm ?? n.AtualizadoEm),
+        };
+
+        _notasOrdenadas = query.ToList();
+    }
+
     private async Task UploadPdfDoMenu(InputFileChangeEventArgs e)
     {
-        _mostrarInserir = false;
+        // Lê o arquivo ANTES de fechar o menu, para que o InputFile não seja
+        // removido do DOM durante o await de CopyToAsync (o que cancelaria a stream).
         await UploadPdf(e);
+        _mostrarInserir = false;
     }
 
     private async Task UploadPdf(InputFileChangeEventArgs e)
@@ -699,24 +1053,35 @@
         var file = e.File;
         if (!file.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)) return;
 
-        var uploadDir = Path.Combine(Env.WebRootPath, "uploads");
-        Directory.CreateDirectory(uploadDir);
+        _uploadErro = null;
 
-        // Remove PDF anterior se existir
-        if (!string.IsNullOrEmpty(notaSelecionada.PdfPath))
+        try
         {
-            var anterior = Path.Combine(Env.WebRootPath, notaSelecionada.PdfPath.TrimStart('/'));
-            if (File.Exists(anterior)) File.Delete(anterior);
+            var uploadDir = Path.Combine(Env.WebRootPath, "uploads");
+            Directory.CreateDirectory(uploadDir);
+
+            // Remove PDF anterior se existir
+            if (!string.IsNullOrEmpty(notaSelecionada.PdfPath))
+            {
+                var anterior = Path.Combine(Env.WebRootPath, notaSelecionada.PdfPath.TrimStart('/'));
+                if (File.Exists(anterior)) File.Delete(anterior);
+            }
+
+            var fileName = $"{notaSelecionada.Id}_{Path.GetFileName(file.Name)}";
+            var filePath = Path.Combine(uploadDir, fileName);
+
+            await using var fs = new FileStream(filePath, FileMode.Create);
+            await file.OpenReadStream(maxAllowedSize: 100 * 1024 * 1024).CopyToAsync(fs);
+
+            notaSelecionada.PdfPath = $"/uploads/{fileName}";
+            NotaService.SalvarAlteracoes();
+        }
+        catch (Exception ex)
+        {
+            _uploadErro = $"Erro ao anexar PDF: {ex.Message}";
         }
 
-        var fileName = $"{notaSelecionada.Id}_{Path.GetFileName(file.Name)}";
-        var filePath = Path.Combine(uploadDir, fileName);
-
-        await using var fs = new FileStream(filePath, FileMode.Create);
-        await file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024).CopyToAsync(fs);
-
-        notaSelecionada.PdfPath = $"/uploads/{fileName}";
-        NotaService.SalvarAlteracoes();
+        StateHasChanged();
     }
 
     private void RemoverPdf()

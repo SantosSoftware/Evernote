@@ -19,6 +19,7 @@ public class Nota
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Titulo { get; set; } = "";
     public string Conteudo { get; set; } = ""; // HTML
+    public DateTime? CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; } = DateTime.Now;
     public bool Excluida { get; set; } = false;
     public Guid CadernoId { get; set; }
@@ -91,6 +92,7 @@ public class NotaService
 
     public void Adicionar(Nota nota)
     {
+        nota.CriadoEm ??= DateTime.Now;
         _db.Notas.Add(nota);
         _db.SaveChanges();
     }
@@ -123,4 +125,22 @@ public class NotaService
     /// Persiste alterações rastreadas pelo EF Core (ex.: título e conteúdo editados na UI).
     /// </summary>
     public void SalvarAlteracoes() => _db.SaveChanges();
+}
+
+// ── Enums de ordenação ────────────────────────────────────────────────────────
+
+public enum CriterioOrdenacao { DataCriacao, Titulo }
+public enum DirecaoOrdenacao  { Crescente, Decrescente }
+public enum EstadoGravacao    { Inativo, Gravando, Pausado }
+
+// ── Gravação de Tela ──────────────────────────────────────────────────────────
+
+public class GravacaoTela
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid NotaId { get; set; }
+    public string CaminhoArquivo { get; set; } = "";
+    public string NomeOriginal { get; set; } = "";
+    public long TamanhoBytes { get; set; }
+    public DateTime CriadoEm { get; set; } = DateTime.Now;
 }
