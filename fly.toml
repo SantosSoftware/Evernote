@@ -1,0 +1,42 @@
+# fly.toml — Configuração do Evenote no Fly.io
+app = "evenote"
+primary_region = "gru"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ASPNETCORE_ENVIRONMENT = "Production"
+  DATABASE_PATH          = "/data/evenote.db"
+  UPLOADS_PATH           = "/data/uploads"
+
+[[mounts]]
+  source      = "evenote_data"
+  destination = "/data"
+
+[[services]]
+  internal_port = 8080
+  protocol      = "tcp"
+
+  [[services.ports]]
+    handlers    = ["http"]
+    port        = 80
+    force_https = true
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port     = 443
+
+  [services.concurrency]
+    type       = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.http_checks]]
+    interval      = 10000
+    timeout       = 5000
+    grace_period  = "30s"
+    method        = "GET"
+    path          = "/"
+    protocol      = "http"
+    restart_limit = 0

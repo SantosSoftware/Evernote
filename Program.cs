@@ -11,7 +11,11 @@ builder.Services.AddRazorComponents()
     .AddHubOptions(options => options.MaximumReceiveMessageSize = 100 * 1024 * 1024); // 100 MB
 
 // Banco de dados SQLite
-var dbPath = Path.Combine(builder.Environment.ContentRootPath, "evenote.db");
+var dbPath = Environment.GetEnvironmentVariable("DATABASE_PATH")
+    ?? Path.Combine(builder.Environment.ContentRootPath, "evenote.db");
+
+// Garante que o diretório do banco existe (necessário no Fly.io antes da primeira execução)
+Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite($"Data Source={dbPath}"));
 
@@ -30,6 +34,13 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>();
+    var pendingMigrations = db.Database.GetPendingMigrations().ToList();
+    if (pendingMigrations.Count > 0)
+    {
+        logger.LogInformation("Aplicando {Count} migration(s): {Migrations}",
+            pendingMigrations.Count, string.Join(", ", pendingMigrations));
+    }
     db.Database.Migrate();
 
     if (!db.Cadernos.Any())
@@ -53,7 +64,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+// HTTPS é gerenciado pelo proxy do Fly.io — UseHttpsRedirection não é necessário no container
 app.UseStaticFiles();
 
 app.UseAntiforgery();
@@ -61,8 +72,11 @@ app.UseAntiforgery();
 // Endpoint dedicado para servir arquivos de upload
 app.MapGet("/uploads/{*filename}", (string filename, IWebHostEnvironment env) =>
 {
-    var webRoot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
-    var filePath = Path.Combine(webRoot, "uploads", Uri.UnescapeDataString(filename));
+    var uploadsBase = Environment.GetEnvironmentVariable("UPLOADS_PATH")
+        ?? Path.Combine(
+            env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot"),
+            "uploads");
+    var filePath = Path.Combine(uploadsBase, Uri.UnescapeDataString(filename));
     if (!File.Exists(filePath)) return Results.NotFound();
     var contentType = Path.GetExtension(filePath).ToLower() switch
     {
