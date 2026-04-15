@@ -25,7 +25,7 @@
 }
 
 .nav-item ::deep .nav-link {
-    color: #3d3d3d;
+    color: #c8c8c8;
     background: none;
     border: none;
     border-radius: 6px;
@@ -45,37 +45,37 @@
     width: 1.15rem;
     height: 1.15rem;
     flex-shrink: 0;
-    color: #5a5a5a;
+    color: #888;
 }
 
 .nav-item ::deep a.active {
-    background-color: #e8e8e8;
-    color: #1a1a1a;
+    background-color: #3d3d3d;
+    color: #ffffff;
     font-weight: 500;
 }
 
 .nav-item ::deep a.active svg {
-    color: #1a1a1a;
+    color: #ffffff;
 }
 
 .nav-item ::deep .nav-link:hover:not(.active) {
-    background-color: #f0f0f0;
-    color: #1a1a1a;
+    background-color: #363636;
+    color: #ffffff;
 }
 
 .nav-separador {
     height: 1px;
-    background: #e0e0e0;
+    background: #3a3a3a;
     margin: 0.5rem 0.75rem;
 }
 
 .nav-item ::deep .nav-link-lixeira {
-    color: #888;
+    color: #777;
 }
 
 .nav-item ::deep .nav-link-lixeira.active,
 .nav-item ::deep .nav-link-lixeira:hover:not(.active) {
-    color: #1a1a1a;
+    color: #ffffff;
 }
 
 /* ── Cadernos expansível ────────────────────────────────────────────────────── */
@@ -98,13 +98,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #5a5a5a;
+    color: #888;
     padding: 0;
     z-index: 1;
 }
 
 .btn-chevron-cadernos:hover {
-    color: #1a1a1a;
+    color: #ffffff;
 }
 
 .btn-chevron-cadernos svg {
@@ -127,7 +127,7 @@
     align-items: center;
     padding: 0 0.75rem 0 2.6rem;
     height: 2.1rem;
-    color: #3d3d3d;
+    color: #aaa;
     text-decoration: none;
     font-size: 0.88rem;
     border-radius: 6px;
@@ -136,13 +136,15 @@
 }
 
 .nav-caderno-item:hover {
-    background-color: #f0f0f0;
-    color: #1a1a1a;
+    background-color: #363636;
+    color: #ffffff;
 }
 
 .nav-caderno-contagem {
     margin-left: 8px;
     flex-shrink: 0;
+    font-size: 0.78rem;
+    color: #777;
 }
 .nav-caderno-nome {
     flex-grow: 1;
