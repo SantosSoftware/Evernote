@@ -1,15 +1,15 @@
 # ── Etapa 1: Build ──────────────────────────────────────────────────────────
-# cache-bust: 1
+# cache-bust: 2
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Restaura dependências antes de copiar o restante (cache de camadas)
 COPY Evenote.csproj ./
-RUN dotnet restore
+RUN dotnet restore Evenote.csproj
 
 # Copia o restante e publica em modo Release
 COPY . .
-RUN dotnet publish Evenote.csproj -c Release -o /app/out --no-restore
+RUN dotnet publish Evenote.csproj -c Release -o /app/out
 
 # ── Etapa 2: Runtime ─────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
