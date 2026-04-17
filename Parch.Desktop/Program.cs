@@ -33,6 +33,8 @@ static class Program
         Directory.CreateDirectory(Path.Combine(parchDir, "uploads"));
         Environment.SetEnvironmentVariable("DATABASE_PATH", Path.Combine(parchDir, "parch.db"));
         Environment.SetEnvironmentVariable("UPLOADS_PATH", Path.Combine(parchDir, "uploads"));
+        // Define a porta ANTES do Task.Run para evitar race condition
+        Environment.SetEnvironmentVariable("ASPNETCORE_URLS", $"http://localhost:{Port}");
 
         // 3. Exibe splash
         var splash = new SplashForm();
@@ -44,21 +46,19 @@ static class Program
         {
             try
             {
-                // Define ASPNETCORE_URLS antes de criar o host para garantir a porta correta
-                Environment.SetEnvironmentVariable("ASPNETCORE_URLS", $"http://localhost:{Port}");
                 var webApp = Parch.ParchApp.CreateApp(Array.Empty<string>());
                 WebHost = webApp;
                 await webApp.StartAsync();
             }
             catch (Exception ex)
             {
-                // Erro no startup — será detectado pelo timeout do WaitForServer
                 Console.Error.WriteLine($"Erro ao iniciar servidor: {ex.Message}");
+                Console.Error.WriteLine(ex.StackTrace);
             }
         });
 
-        // 5. Aguarda servidor ficar disponível (timeout 30s)
-        bool ready = WaitForServer($"http://localhost:{Port}/", TimeSpan.FromSeconds(30));
+        // 5. Aguarda servidor ficar disponível (timeout 120s — single file demora mais na 1ª execução)
+        bool ready = WaitForServer($"http://localhost:{Port}/", TimeSpan.FromSeconds(120));
 
         splash.Close();
         splash.Dispose();

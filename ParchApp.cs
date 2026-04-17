@@ -13,15 +13,6 @@ public static class ParchApp
 {
     public static WebApplication CreateApp(string[] args)
     {
-        // Garante que a URL passada via args seja respeitada,
-        // sobrescrevendo qualquer ASPNETCORE_URLS do ambiente
-        var urlArg = args.FirstOrDefault(a => a.StartsWith("--urls="));
-        if (urlArg is not null)
-        {
-            var url = urlArg["--urls=".Length..];
-            Environment.SetEnvironmentVariable("ASPNETCORE_URLS", url);
-        }
-
         var builder = WebApplication.CreateBuilder(args);
 
         // Em modo desktop (single file), o wwwroot fica junto ao .exe
