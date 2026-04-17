@@ -28,4 +28,14 @@
     </None>
   </ItemGroup>
 
+  <!-- Inclui o wwwroot do projeto Parch no output do Desktop -->
+  <Target Name="CopyWwwroot" AfterTargets="Build">
+    <ItemGroup>
+      <WwwrootFiles Include="..\wwwroot\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(WwwrootFiles)"
+          DestinationFiles="@(WwwrootFiles->'$(OutputPath)wwwroot\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

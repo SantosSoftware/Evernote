@@ -15,6 +15,22 @@ public static class ParchApp
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // Garante que a URL passada via args seja respeitada (sobrescreve ASPNETCORE_URLS)
+        var urlArg = args.FirstOrDefault(a => a.StartsWith("--urls="));
+        if (urlArg is not null)
+        {
+            var url = urlArg["--urls=".Length..];
+            builder.WebHost.UseUrls(url);
+        }
+
+        // Em modo desktop (single file), o wwwroot fica junto ao .exe
+        var exeDir = AppContext.BaseDirectory;
+        var wwwrootPath = Path.Combine(exeDir, "wwwroot");
+        if (Directory.Exists(wwwrootPath))
+        {
+            builder.Environment.WebRootPath = wwwrootPath;
+        }
+
         // Add services to the container.
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents()
