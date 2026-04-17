@@ -44,8 +44,9 @@ static class Program
         {
             try
             {
-                var args = new[] { $"--urls=http://localhost:{Port}" };
-                var webApp = Parch.ParchApp.CreateApp(args);
+                // Define ASPNETCORE_URLS antes de criar o host para garantir a porta correta
+                Environment.SetEnvironmentVariable("ASPNETCORE_URLS", $"http://localhost:{Port}");
+                var webApp = Parch.ParchApp.CreateApp(Array.Empty<string>());
                 WebHost = webApp;
                 await webApp.StartAsync();
             }
