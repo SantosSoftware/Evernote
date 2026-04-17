@@ -124,7 +124,7 @@
     {
         if (firstRender)
         {
-            _rascunho = await JS.InvokeAsync<string>("evenoteHome.loadRascunho");
+            _rascunho = await JS.InvokeAsync<string>("ParchHome.loadRascunho");
             StateHasChanged();
         }
     }
@@ -132,7 +132,7 @@
     private async Task OnRascunhoInput(ChangeEventArgs e)
     {
         _rascunho = e.Value?.ToString() ?? "";
-        await JS.InvokeVoidAsync("evenoteHome.saveRascunho", _rascunho);
+        await JS.InvokeVoidAsync("ParchHome.saveRascunho", _rascunho);
     }
 
     private static string FormatHora(DateTime dt) =>

@@ -1,0 +1,27 @@
+# flyctl launch added from .gitignore
+## Claude Code
+**\.claude
+
+## Credenciais locais
+**\appsettings.Development.json
+
+## Banco de dados
+**\*.db
+**\*.db-shm
+**\*.db-wal
+
+## .NET / Blazor
+**\bin
+**\obj
+**\*.user
+**\*.suo
+**\.vs
+**\*.pdb
+
+## Logs
+**\*.log
+
+## OS
+**\.DS_Store
+**\Thumbs.db
+fly.toml

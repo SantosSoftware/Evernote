@@ -1,6 +1,6 @@
-using Evenote.Data;
+using Parch.Data;
 
-namespace Evenote.Services;
+namespace Parch.Services;
 
 // ── Modelos ──────────────────────────────────────────────────────────────────
 

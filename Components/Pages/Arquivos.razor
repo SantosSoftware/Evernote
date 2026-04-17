@@ -206,7 +206,7 @@
     private async Task Baixar()
     {
         if (_selecionado == null) return;
-        await JS.InvokeVoidAsync("evenoteArquivos.download", _selecionado.Url, _selecionado.NomeOriginal);
+        await JS.InvokeVoidAsync("ParchArquivos.download", _selecionado.Url, _selecionado.NomeOriginal);
     }
 
     private static string ExtrairNomeOriginal(string fileName)

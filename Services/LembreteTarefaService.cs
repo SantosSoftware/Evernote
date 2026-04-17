@@ -1,11 +1,11 @@
 using System.Text;
-using Evenote.Data;
+using Parch.Data;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
 
-namespace Evenote.Services;
+namespace Parch.Services;
 
 public class LembreteTarefaService : BackgroundService
 {

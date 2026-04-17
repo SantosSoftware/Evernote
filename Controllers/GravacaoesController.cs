@@ -1,7 +1,7 @@
-using Evenote.Services;
+using Parch.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Evenote.Controllers;
+namespace Parch.Controllers;
 
 [ApiController]
 [Route("api/gravacoes")]

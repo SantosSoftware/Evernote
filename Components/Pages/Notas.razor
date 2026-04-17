@@ -1,7 +1,7 @@
 @page "/notas"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components
-@using Evenote.Controllers
+@using Parch.Controllers
 @inject IJSRuntime JS
 @inject NotaService NotaService
 @inject GravacaoTelaService GravacaoTelaService
@@ -651,7 +651,7 @@
             {
                 _inicializado = true;
                 _dotNetRef = DotNetObjectReference.Create(this);
-                await JS.InvokeVoidAsync("evenoteEditor.init", editorRef, toolbarRef, _dotNetRef);
+                await JS.InvokeVoidAsync("ParchEditor.init", editorRef, toolbarRef, _dotNetRef);
                 // Ao inicializar, recupera qualquer conteúdo salvo no sessionStorage
                 // antes de uma navegação (o blur grava lá de forma síncrona no browser).
                 await RecuperarConteudoPendente();
@@ -662,8 +662,8 @@
             if (_idCarregado != notaSelecionada.Id)
             {
                 _idCarregado = notaSelecionada.Id;
-                await JS.InvokeVoidAsync("evenoteEditor.setContent", editorRef, notaSelecionada.Conteudo);
-                await JS.InvokeVoidAsync("evenoteEditor.setNoteId", notaSelecionada.Id.ToString());
+                await JS.InvokeVoidAsync("ParchEditor.setContent", editorRef, notaSelecionada.Conteudo);
+                await JS.InvokeVoidAsync("ParchEditor.setNoteId", notaSelecionada.Id.ToString());
                 _gravacoes = await GravacaoTelaService.ObterPorNotaAsync(notaSelecionada.Id);
             }
         }
@@ -677,7 +677,7 @@
     {
         try
         {
-            var pending = await JS.InvokeAsync<PendingContent?>("evenoteEditor.getPendingContent");
+            var pending = await JS.InvokeAsync<PendingContent?>("ParchEditor.getPendingContent");
             if (pending == null || string.IsNullOrEmpty(pending.Id)) return;
 
             var nota = _notasOrdenadas.FirstOrDefault(
@@ -811,7 +811,7 @@
     {
         if (notaSelecionada == nota) return;
         // Cancela debounce pendente e faz um save explícito antes de trocar de nota
-        try { await JS.InvokeVoidAsync("evenoteEditor.clearDebounce"); } catch { }
+        try { await JS.InvokeVoidAsync("ParchEditor.clearDebounce"); } catch { }
         await SalvarConteudoAtual();
         notaSelecionada = nota;
         _idCarregado = null;
@@ -895,7 +895,7 @@
     {
         _mostrarInserir = false;
         // <hr> + <p> vazio para o cursor continuar abaixo da linha
-        await JS.InvokeVoidAsync("evenoteEditor.insertHtml", "<hr/><p><br/></p>");
+        await JS.InvokeVoidAsync("ParchEditor.insertHtml", "<hr/><p><br/></p>");
     }
 
     private void ToggleMenuAcoes()
@@ -932,7 +932,7 @@
     private async Task Formatar(string comando, string? valor = null)
     {
         // Chama document.execCommand no browser via JS interop
-        await JS.InvokeVoidAsync("evenoteEditor.format", comando, valor);
+        await JS.InvokeVoidAsync("ParchEditor.format", comando, valor);
     }
 
     private void ToggleCorFonte()
@@ -955,14 +955,14 @@
     {
         _corFonteSelecionada = cor == "transparent" ? "#1a1a1a" : cor;
         _mostrarCorFonte = false;
-        await JS.InvokeVoidAsync("evenoteEditor.applyColor", "foreColor", cor);
+        await JS.InvokeVoidAsync("ParchEditor.applyColor", "foreColor", cor);
     }
 
     private async Task AplicarCorFundo(string cor)
     {
         _corFundoSelecionada = cor == "transparent" ? "#ffff00" : cor;
         _mostrarCorFundo = false;
-        await JS.InvokeVoidAsync("evenoteEditor.applyColor", "hiliteColor", cor);
+        await JS.InvokeVoidAsync("ParchEditor.applyColor", "hiliteColor", cor);
     }
 
     private async Task OnEditorFocusOut(FocusEventArgs _)
@@ -979,7 +979,7 @@
         // já está em nota.Conteudo — que foi mantido em sincronia pelo ConteudoAlterado.
         try
         {
-            var conteudo = await JS.InvokeAsync<string>("evenoteEditor.getContent", editorRef);
+            var conteudo = await JS.InvokeAsync<string>("ParchEditor.getContent", editorRef);
             if (!string.IsNullOrEmpty(conteudo)) nota.Conteudo = conteudo;
         }
         catch { }

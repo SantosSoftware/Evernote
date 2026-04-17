@@ -1,7 +1,7 @@
-using Evenote.Services;
+using Parch.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace Evenote.Data;
+namespace Parch.Data;
 
 public class AppDbContext : DbContext
 {

@@ -60,7 +60,7 @@
 
         <!-- Lista de calendários -->
         <div class="cal-lista-secao">
-            <span class="cal-lista-titulo">Calendário do Evenote</span>
+            <span class="cal-lista-titulo">Calendário do Parch</span>
             @foreach (var cal in CalendarioService.Calendarios)
             {
                 <label class="cal-lista-item">
@@ -558,7 +558,7 @@
                 : 8;
             try
             {
-                await JS.InvokeVoidAsync("evenoteCalendario.scrollTo", _gradeRef, scrollHora * HoraPx);
+                await JS.InvokeVoidAsync("ParchCalendario.scrollTo", _gradeRef, scrollHora * HoraPx);
             }
             catch { }
         }

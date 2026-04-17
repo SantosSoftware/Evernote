@@ -1,5 +1,5 @@
-# fly.toml — Configuração do Evenote no Fly.io
-app = "evenote"
+# fly.toml — Configuração do Parch no Fly.io
+app = "parch"
 primary_region = "gru"
 
 [build]
@@ -7,11 +7,11 @@ primary_region = "gru"
 
 [env]
   ASPNETCORE_ENVIRONMENT = "Production"
-  DATABASE_PATH          = "/data/evenote.db"
+  DATABASE_PATH          = "/data/parch.db"
   UPLOADS_PATH           = "/data/uploads"
 
 [[mounts]]
-  source      = "evenote_data"
+  source      = "parch_data"
   destination = "/data"
 
 [http_service]

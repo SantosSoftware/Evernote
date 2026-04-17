@@ -1,7 +1,7 @@
-using Evenote.Data;
+using Parch.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace Evenote.Services;
+namespace Parch.Services;
 
 public class GravacaoTelaService
 {

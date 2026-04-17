@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Evenote.Migrations
+namespace Parch.Migrations
 {
     /// <inheritdoc />
     public partial class AddNotificadaTarefa : Migration
